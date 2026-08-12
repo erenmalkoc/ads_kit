@@ -1,0 +1,365 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+
+import 'ad_health_event.dart';
+import 'ad_provider.dart';
+import 'frequency_guard.dart';
+import 'health_monitor.dart';
+import 'providers/noop_ad_provider.dart';
+import 'remote_config/ad_config_source.dart';
+import 'remote_config/ad_runtime_config.dart';
+import 'remote_config/firebase_ad_config_source.dart';
+import 'types/ad_banner_size.dart';
+import 'types/ad_config.dart';
+import 'types/ad_consent.dart';
+import 'types/ad_error.dart';
+import 'types/ad_event.dart';
+import 'types/ad_format.dart';
+import 'types/ad_show_result.dart';
+
+/// Builds a fresh [AdProvider] instance. Registered per provider key via
+/// [AdManager.register] — ads_core never names a concrete provider class.
+typedef AdProviderFactory = AdProvider Function();
+
+/// The single entry point the host app talks to. Everything else in this
+/// package — [FrequencyGuard], [HealthMonitor], remote config parsing — is
+/// wired together here so app code never has to know which provider is
+/// active, or that a fallback even happened.
+final class AdManager {
+  AdManager._();
+
+  static final Map<String, AdProviderFactory> _factories = {
+    'noop': NoopAdProvider.new,
+  };
+
+  static AdProvider _active = NoopAdProvider();
+  static String _activeKey = 'noop';
+  static AdRuntimeConfig _config = AdRuntimeConfig.safeDefaults;
+  static AdConsent _consent = const AdConsent();
+  static String? _countryCode;
+
+  static FrequencyGuard _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
+  static HealthMonitor _healthMonitor =
+      HealthMonitor(failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold);
+
+  static final _healthEvents = StreamController<AdHealthEvent>.broadcast();
+  static final _managed = _ManagedAdProvider();
+
+  /// The provider the app talks to. Stable across `boot`/`switchProvider`
+  /// calls and automatic health-triggered fallbacks — it's always this same
+  /// object, forwarding to whichever real provider is currently active.
+  static AdProvider get I => _managed;
+
+  /// Key of the provider currently backing [I] (e.g. `"levelplay"`,
+  /// `"max"`, `"noop"`). Useful for a debug menu; not required for normal
+  /// ad-serving call sites.
+  static String get activeProviderName => _activeKey;
+
+  /// Layer-lifecycle events (currently: provider switches). Distinct from
+  /// [AdProvider.events] — the app is not required to listen to this, but
+  /// may forward it to its own analytics.
+  static Stream<AdHealthEvent> get healthEvents => _healthEvents.stream;
+
+  /// Registers a factory for [key] so [boot]/[switchProvider] can construct
+  /// that provider on demand. Call this once per provider package before
+  /// [boot] (e.g. in `main()`):
+  /// ```dart
+  /// AdManager.register('levelplay', () => LevelPlayAdProvider());
+  /// AdManager.register('max', () => MaxAdProvider());
+  /// ```
+  static void register(String key, AdProviderFactory factory) {
+    _factories[key] = factory;
+  }
+
+  /// Reads remote config, resolves the active provider, and initializes it.
+  ///
+  /// Resolution order: configured `active_provider` -> configured
+  /// `fallback_provider` -> [NoopAdProvider]. Never throws — any failure
+  /// anywhere in this chain lands on noop.
+  static Future<void> boot({
+    AdConfigSource? configSource,
+    AdConsent consent = const AdConsent(),
+    String? countryCode,
+  }) async {
+    _consent = consent;
+    _countryCode = countryCode;
+
+    final source = configSource ?? FirebaseAdConfigSource();
+    Map<String, dynamic>? raw;
+    try {
+      raw = await source.fetchRawConfig();
+    } catch (_) {
+      raw = null;
+    }
+    _config = AdRuntimeConfig.fromJson(raw);
+    _frequencyGuard = _guardFrom(_config);
+    _healthMonitor = HealthMonitor(failureThreshold: _config.healthFailureThreshold);
+
+    await _activate(
+      _config.activeProvider,
+      reason: ProviderSwitchReason.initFailed,
+      emitOnDirectSuccess: false,
+    );
+  }
+
+  /// Explicitly switches the active provider at runtime — no store update
+  /// needed, since this can be driven by the same remote config that
+  /// changed `active_provider`, or called directly for a manual override.
+  ///
+  /// Falls back exactly like [boot] does if [key] fails to init.
+  static Future<void> switchProvider(String key) => _activate(
+        key,
+        reason: ProviderSwitchReason.manual,
+        emitOnDirectSuccess: true,
+      );
+
+  /// Resets all static state to its pre-boot defaults. Only meant for
+  /// tests — production code boots once per process.
+  @visibleForTesting
+  static Future<void> resetForTesting() async {
+    await _safeDispose(_active);
+    _factories
+      ..clear()
+      ..['noop'] = NoopAdProvider.new;
+    _active = NoopAdProvider();
+    _activeKey = 'noop';
+    _config = AdRuntimeConfig.safeDefaults;
+    _consent = const AdConsent();
+    _countryCode = null;
+    _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
+    _healthMonitor =
+        HealthMonitor(failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold);
+    _managed._bindTo(_active, _activeKey);
+  }
+
+  static FrequencyGuard _guardFrom(AdRuntimeConfig config) => FrequencyGuard(
+        config: FrequencyGuardConfig(
+          coldStartGrace: config.coldStartGrace,
+          minInterval: config.interstitialMinInterval,
+          maxPerSession: config.interstitialMaxPerSession,
+          disabledCountries: config.disabledCountries,
+        ),
+      );
+
+  static AdConfig _currentAdConfig() => AdConfig(
+        consent: _consent,
+        formatsEnabled: _config.formatsEnabled,
+        countryCode: _countryCode,
+      );
+
+  static Future<AdProvider?> _tryCreateAndInit(String key) async {
+    final factory = _factories[key];
+    if (factory == null) return null;
+
+    final AdProvider provider;
+    try {
+      provider = factory();
+    } catch (_) {
+      return null;
+    }
+
+    try {
+      await provider.init(_currentAdConfig());
+      return provider;
+    } catch (_) {
+      unawaited(_safeDispose(provider));
+      return null;
+    }
+  }
+
+  static Future<void> _activate(
+    String requestedKey, {
+    required ProviderSwitchReason reason,
+    required bool emitOnDirectSuccess,
+  }) async {
+    final previous = _active;
+    final previousKey = _activeKey;
+
+    var provider = await _tryCreateAndInit(requestedKey);
+    var resolvedKey = requestedKey;
+    var resolvedReason = reason;
+    var didFallBack = false;
+
+    if (provider == null && requestedKey != _config.fallbackProvider) {
+      provider = await _tryCreateAndInit(_config.fallbackProvider);
+      resolvedKey = _config.fallbackProvider;
+      resolvedReason = ProviderSwitchReason.initFailed;
+      didFallBack = true;
+    }
+
+    if (provider == null && resolvedKey != 'noop') {
+      final noop = NoopAdProvider();
+      await noop.init(_currentAdConfig());
+      provider = noop;
+      resolvedKey = 'noop';
+      resolvedReason = ProviderSwitchReason.initFailed;
+      didFallBack = true;
+    }
+
+    provider ??= previous;
+
+    _active = provider;
+    _activeKey = resolvedKey;
+    _healthMonitor.reset(resolvedKey);
+    _managed._bindTo(provider, resolvedKey);
+
+    final shouldEmit = resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
+    if (shouldEmit) {
+      _healthEvents.add(AdProviderSwitched(
+        fromProvider: previousKey,
+        toProvider: resolvedKey,
+        reason: resolvedReason,
+      ));
+    }
+
+    if (!identical(previous, provider)) {
+      unawaited(_safeDispose(previous));
+    }
+  }
+
+  static Future<void> _safeDispose(AdProvider provider) async {
+    try {
+      await provider.dispose();
+    } catch (_) {
+      // Disposal errors must never propagate — we're already tearing this
+      // provider down.
+    }
+  }
+}
+
+/// The object behind [AdManager.I]. Forwards every call to whichever real
+/// provider is currently active, applying [FrequencyGuard] to interstitials
+/// and feeding [HealthMonitor] from the delegate's event stream so a
+/// provider swap underneath is invisible to call sites.
+final class _ManagedAdProvider implements AdProvider {
+  AdProvider _delegate = NoopAdProvider();
+  String _delegateKey = 'noop';
+  StreamSubscription<AdEvent>? _delegateSub;
+  final _events = StreamController<AdEvent>.broadcast();
+
+  void _bindTo(AdProvider provider, String key) {
+    unawaited(_delegateSub?.cancel());
+    _delegate = provider;
+    _delegateKey = key;
+    _delegateSub = provider.events.listen((event) {
+      _events.add(event);
+      _trackHealth(event, key);
+    });
+  }
+
+  void _trackHealth(AdEvent event, String key) {
+    switch (event) {
+      case AdEventFailed():
+        final tripped = AdManager._healthMonitor.recordFailure(key);
+        if (tripped) _escalateAfterHealthTrip(key);
+      case AdEventLoaded():
+      case AdEventShown():
+      case AdEventRevenuePaid():
+        AdManager._healthMonitor.recordSuccess(key);
+      case AdEventClicked():
+      case AdEventDismissed():
+      case AdEventRewardEarned():
+        break;
+    }
+  }
+
+  void _escalateAfterHealthTrip(String unhealthyKey) {
+    final nextKey =
+        unhealthyKey == AdManager._config.fallbackProvider ? 'noop' : AdManager._config.fallbackProvider;
+    unawaited(AdManager._activate(
+      nextKey,
+      reason: ProviderSwitchReason.healthThresholdExceeded,
+      emitOnDirectSuccess: true,
+    ));
+  }
+
+  @override
+  String get name => _delegate.name;
+
+  @override
+  Future<void> init(AdConfig config) => throw UnsupportedError(
+        'AdManager.I owns provider lifecycle — call AdManager.boot() or '
+        'AdManager.switchProvider() instead of init() directly.',
+      );
+
+  @override
+  Future<void> dispose() => throw UnsupportedError(
+        'AdManager.I owns provider lifecycle — providers are disposed '
+        'automatically when AdManager switches away from them.',
+      );
+
+  @override
+  Future<void> preload(AdFormat format) async {
+    try {
+      await _delegate.preload(format);
+    } catch (_) {
+      // preload is fire-and-forget from the app's perspective; a real
+      // failure will surface as AdEventFailed on the events stream.
+    }
+  }
+
+  @override
+  Future<bool> isReady(AdFormat format) async {
+    try {
+      return await _delegate.isReady(format);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<AdShowResult> showInterstitial({String? placement}) async {
+    final decision = AdManager._frequencyGuard.evaluate(countryCode: AdManager._countryCode);
+    if (!decision.allowed) return AdShowResult.suppressed();
+
+    final key = _delegateKey;
+    final result = await _safeShow(
+      () => _delegate.showInterstitial(placement: placement),
+      key,
+    );
+    if (result.shown) AdManager._frequencyGuard.recordShown();
+    return result;
+  }
+
+  @override
+  Future<AdShowResult> showRewarded({String? placement}) => _safeShow(
+        () => _delegate.showRewarded(placement: placement),
+        _delegateKey,
+      );
+
+  @override
+  Future<AdShowResult> showAppOpen({String? placement}) => _safeShow(
+        () => _delegate.showAppOpen(placement: placement),
+        _delegateKey,
+      );
+
+  /// Runs a provider `show*` call, converting an uncaught exception into a
+  /// failed [AdShowResult] and counting it toward [HealthMonitor] — this is
+  /// the safety net for a provider that throws instead of following the
+  /// "always emit [AdEventFailed]" contract on [AdProvider.events].
+  Future<AdShowResult> _safeShow(
+    Future<AdShowResult> Function() call,
+    String key,
+  ) async {
+    try {
+      return await call();
+    } catch (error) {
+      final tripped = AdManager._healthMonitor.recordFailure(key);
+      if (tripped) _escalateAfterHealthTrip(key);
+      return AdShowResult.failed(AdError(
+        code: 'uncaught_exception',
+        message: error.toString(),
+        providerName: key,
+        cause: error,
+      ));
+    }
+  }
+
+  @override
+  Widget banner({required AdBannerSize size, String? placement}) =>
+      _delegate.banner(size: size, placement: placement);
+
+  @override
+  Stream<AdEvent> get events => _events.stream;
+}

@@ -1,0 +1,9 @@
+name: ads_kit
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - packages/ads_core
+  - example

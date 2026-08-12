@@ -1,0 +1,22 @@
+name: ads_kit
+
+packages:
+  - packages/**
+  - example
+
+command:
+  bootstrap:
+    usePubspecOverrides: false
+
+scripts:
+  analyze:
+    run: melos exec -- dart analyze .
+    description: Run static analysis on every package.
+
+  test:
+    run: melos exec --dir-exists=test -- flutter test
+    description: Run tests on every package that has a test/ directory.
+
+  format:
+    run: melos exec -- dart format --set-exit-if-changed .
+    description: Check formatting on every package.

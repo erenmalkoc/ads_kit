@@ -1,0 +1,25 @@
+name: ads_core
+description: >
+  Mediation-platform-independent ad abstraction contract. Defines the
+  AdProvider interface, AdManager entry point, frequency guarding, health
+  monitoring and remote-config-driven provider selection. Contains zero
+  dependencies on any ad network SDK.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_remote_config: ^5.3.0
+  meta: ^1.17.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
