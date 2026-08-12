@@ -1,0 +1,25 @@
+name: ads_levelplay
+description: >
+  Unity LevelPlay (ironSource) implementation of the ads_core AdProvider
+  contract. Wraps unity_levelplay_mediation — no ads_core-facing API here
+  ever leaks a LevelPlay SDK type.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ads_core:
+    path: ../ads_core
+  unity_levelplay_mediation: ^9.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

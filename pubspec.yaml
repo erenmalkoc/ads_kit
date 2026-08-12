@@ -6,4 +6,5 @@ environment:
 
 workspace:
   - packages/ads_core
+  - packages/ads_levelplay
   - example
