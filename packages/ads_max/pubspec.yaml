@@ -1,0 +1,24 @@
+name: ads_max
+description: >
+  AppLovin MAX implementation of the ads_core AdProvider contract. Wraps
+  applovin_max — no ads_core-facing API here ever leaks a MAX SDK type.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ads_core:
+    path: ../ads_core
+  applovin_max: ^4.6.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

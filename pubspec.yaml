@@ -7,4 +7,5 @@ environment:
 workspace:
   - packages/ads_core
   - packages/ads_levelplay
+  - packages/ads_max
   - example
