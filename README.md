@@ -17,7 +17,7 @@ packages/
   ads_core/        # AdProvider contract, AdManager, FrequencyGuard,
                     # HealthMonitor, remote-config parsing, NoopAdProvider.
                     # Zero dependencies on any ad network SDK.
-  ads_levelplay/    # LevelPlayAdProvider — wraps ironsource_mediation.
+  ads_levelplay/    # LevelPlayAdProvider — wraps unity_levelplay_mediation.
   ads_max/          # MaxAdProvider — wraps applovin_max.
 example/            # Runnable demo: switch providers, try every format,
                     # watch the live AdEvent stream.
@@ -77,5 +77,5 @@ flutter run
 ## Status
 
 - [x] `ads_core` + `NoopAdProvider` + tests + example app
-- [ ] `ads_levelplay`
-- [ ] `ads_max`
+- [x] `ads_levelplay` (Unity LevelPlay, over `unity_levelplay_mediation`)
+- [x] `ads_max` (AppLovin MAX, over `applovin_max`)
