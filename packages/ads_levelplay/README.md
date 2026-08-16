@@ -16,14 +16,17 @@ AdManager.register('levelplay', () => LevelPlayAdProvider());
 Ad unit IDs are per-app/per-environment values, not part of the
 abstraction contract, so they're passed through `AdConfig.extras` rather
 than hardcoded in this package. `AdManager` builds that `AdConfig` from
-whatever `extras` map you pass into `AdManager.boot`:
+`AdManager.boot(providerExtras: {'levelplay': {...}})` merged with remote
+config's `providers.levelplay` block (remote wins per key). LevelPlay app
+keys and ad unit ids are **per-platform** — use the `_android`/`_ios` key
+suffixes so one shared config serves both platforms:
 
 | Key | Required | Notes |
 |---|---|---|
-| `app_key` | yes | LevelPlay app key from the ironSource/Unity dashboard |
-| `interstitial_ad_unit_id` | only if using interstitials | |
-| `rewarded_ad_unit_id` | only if using rewarded ads | |
-| `banner_ad_unit_id` | only if using banners | |
+| `app_key` | yes | LevelPlay app key — in practice always supplied as `app_key_android` + `app_key_ios` |
+| `interstitial_ad_unit_id` | only if using interstitials | per-platform suffixes apply |
+| `rewarded_ad_unit_id` | only if using rewarded ads | per-platform suffixes apply |
+| `banner_ad_unit_id` | only if using banners | per-platform suffixes apply |
 
 A format with no ad unit id configured is simply never loaded —
 `preload`/`isReady`/`show*` behave as "not configured" (a failed

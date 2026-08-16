@@ -13,7 +13,11 @@ AdManager.register('max', () => MaxAdProvider());
 ```
 
 Ad unit IDs are per-app/per-environment values, not part of the
-abstraction contract, so they're passed through `AdConfig.extras`:
+abstraction contract, so they're passed through `AdConfig.extras` —
+supplied via `AdManager.boot(providerExtras: {'max': {...}})` merged with
+remote config's `providers.max` block (remote wins per key). MAX ad unit
+ids are per-platform — use the `_android`/`_ios` key suffixes (the SDK
+key itself is account-wide, no suffix needed):
 
 | Key | Required | Notes |
 |---|---|---|
