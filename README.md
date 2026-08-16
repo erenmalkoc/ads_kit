@@ -1,8 +1,22 @@
 # ads_kit
 
-A mediation-platform-independent ad abstraction for our Flutter apps. App code
+[![pub package](https://img.shields.io/pub/v/ads_kit.svg?label=ads_kit)](https://pub.dev/packages/ads_kit)
+[![pub package](https://img.shields.io/pub/v/ads_kit_levelplay.svg?label=ads_kit_levelplay)](https://pub.dev/packages/ads_kit_levelplay)
+[![pub package](https://img.shields.io/pub/v/ads_kit_max.svg?label=ads_kit_max)](https://pub.dev/packages/ads_kit_max)
+
+A mediation-platform-independent ad abstraction for Flutter apps. App code
 depends only on `ads_kit` — never on a mediation SDK directly — so swapping
 providers is a remote-config value, not a store release.
+
+| Package | pub.dev | What it is |
+|---|---|---|
+| `ads_kit` | [pub.dev/packages/ads_kit](https://pub.dev/packages/ads_kit) | The contract + `AdManager`. The only package app code imports. |
+| `ads_kit_levelplay` | [pub.dev/packages/ads_kit_levelplay](https://pub.dev/packages/ads_kit_levelplay) | Unity LevelPlay (ironSource) provider. |
+| `ads_kit_max` | [pub.dev/packages/ads_kit_max](https://pub.dev/packages/ads_kit_max) | AppLovin MAX provider. |
+
+```bash
+flutter pub add ads_kit ads_kit_levelplay   # or ads_kit_max
+```
 
 ## Why
 
@@ -137,6 +151,9 @@ flutter run
 
 ## Status
 
-- [x] `ads_kit` + `NoopAdProvider` + tests + example app
-- [x] `ads_kit_levelplay` (Unity LevelPlay, over `unity_levelplay_mediation`)
-- [x] `ads_kit_max` (AppLovin MAX, over `applovin_max`)
+All three packages are published on pub.dev and battle-tested in
+production:
+
+- [x] [`ads_kit`](https://pub.dev/packages/ads_kit) + `NoopAdProvider` + tests + example app
+- [x] [`ads_kit_levelplay`](https://pub.dev/packages/ads_kit_levelplay) (Unity LevelPlay, over `unity_levelplay_mediation`)
+- [x] [`ads_kit_max`](https://pub.dev/packages/ads_kit_max) (AppLovin MAX, over `applovin_max`)
