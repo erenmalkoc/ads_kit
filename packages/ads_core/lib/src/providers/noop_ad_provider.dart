@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../ad_provider.dart';
 import '../types/ad_banner_size.dart';
 import '../types/ad_config.dart';
+import '../types/ad_consent.dart';
 import '../types/ad_event.dart';
 import '../types/ad_format.dart';
 import '../types/ad_show_result.dart';
@@ -22,6 +23,9 @@ final class NoopAdProvider implements AdProvider {
 
   @override
   Future<void> init(AdConfig config) async {}
+
+  @override
+  Future<void> updateConsent(AdConsent consent) async {}
 
   @override
   Future<void> dispose() async {

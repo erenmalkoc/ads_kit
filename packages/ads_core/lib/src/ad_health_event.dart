@@ -6,6 +6,10 @@ enum ProviderSwitchReason {
   /// [HealthMonitor]'s consecutive-failure threshold was exceeded.
   healthThresholdExceeded,
 
+  /// The active provider rejected an updated consent state it cannot
+  /// serve (e.g. MAX with a now-child-directed user).
+  consentRejected,
+
   /// The app (or a caller) explicitly requested `AdManager.switchProvider`.
   manual,
 }

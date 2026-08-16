@@ -50,16 +50,8 @@ final class LevelPlayAdProvider implements AdProvider {
     }
 
     // Consent must be set before init to take effect for the very first
-    // ad request LevelPlay makes. LevelPlay.setConsent is deprecated in
-    // favor of LevelPlayPrivacySettings.setGDPRConsents(Map<network, bool>)
-    // — but that API wants per-network consent, which AdConsent doesn't
-    // model (it's a single app-wide GDPR flag). Using the deprecated
-    // whole-SDK setter is the correct fit until ads_core grows per-network
-    // consent, which nothing in this monorepo needs yet.
-    // ignore: deprecated_member_use
-    await lp.LevelPlay.setConsent(config.consent.gdprConsent ?? false);
-    await lp.LevelPlayPrivacySettings.setCCPA(config.consent.ccpaOptOut ?? true);
-    await lp.LevelPlayPrivacySettings.setCOPPA(config.consent.isChildDirected);
+    // ad request LevelPlay makes.
+    await _applyConsent(config.consent);
     // ATT is requested by the app itself, never by this layer — LevelPlay
     // picks up IDFA availability from the OS once the app has asked.
 
@@ -116,6 +108,22 @@ final class LevelPlayAdProvider implements AdProvider {
       final adUnitId = config.extras['banner_ad_unit_id'];
       if (adUnitId != null && adUnitId.isNotEmpty) _bannerAdUnitId = adUnitId;
     }
+  }
+
+  @override
+  Future<void> updateConsent(AdConsent consent) => _applyConsent(consent);
+
+  /// LevelPlay.setConsent is deprecated in favor of
+  /// LevelPlayPrivacySettings.setGDPRConsents(Map<network, bool>) — but
+  /// that API wants per-network consent, which AdConsent doesn't model
+  /// (it's a single app-wide GDPR flag). Using the deprecated whole-SDK
+  /// setter is the correct fit until ads_core grows per-network consent,
+  /// which nothing in this monorepo needs yet.
+  Future<void> _applyConsent(AdConsent consent) async {
+    // ignore: deprecated_member_use
+    await lp.LevelPlay.setConsent(consent.gdprConsent ?? false);
+    await lp.LevelPlayPrivacySettings.setCCPA(consent.ccpaOptOut ?? true);
+    await lp.LevelPlayPrivacySettings.setCOPPA(consent.isChildDirected);
   }
 
   @override

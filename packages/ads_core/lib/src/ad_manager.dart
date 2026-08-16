@@ -126,6 +126,26 @@ final class AdManager {
         emitOnDirectSuccess: true,
       );
 
+  /// Re-applies changed consent to the active provider mid-session — call
+  /// this after the user completes a consent flow, instead of re-booting.
+  /// If the active provider cannot serve the new consent state at all
+  /// (e.g. MAX for a now-child-directed user), it is switched away from,
+  /// falling back exactly like a failed init.
+  static Future<void> updateConsent(AdConsent consent) async {
+    _consent = consent;
+    try {
+      await _active.updateConsent(consent);
+    } catch (_) {
+      final nextKey =
+          _activeKey == _config.fallbackProvider ? 'noop' : _config.fallbackProvider;
+      await _activate(
+        nextKey,
+        reason: ProviderSwitchReason.consentRejected,
+        emitOnDirectSuccess: true,
+      );
+    }
+  }
+
   /// Resets all static state to its pre-boot defaults. Only meant for
   /// tests — production code boots once per process.
   @visibleForTesting
@@ -319,6 +339,12 @@ final class _ManagedAdProvider implements AdProvider {
   Future<void> dispose() => throw UnsupportedError(
         'AdManager.I owns provider lifecycle — providers are disposed '
         'automatically when AdManager switches away from them.',
+      );
+
+  @override
+  Future<void> updateConsent(AdConsent consent) => throw UnsupportedError(
+        'Call AdManager.updateConsent() instead — it also handles a '
+        'provider that cannot serve the new consent state.',
       );
 
   @override

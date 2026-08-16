@@ -35,6 +35,9 @@ final class DemoAdProvider implements AdProvider {
   }
 
   @override
+  Future<void> updateConsent(AdConsent consent) async {}
+
+  @override
   Future<void> dispose() async {
     await _events.close();
   }

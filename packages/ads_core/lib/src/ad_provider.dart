@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'types/ad_banner_size.dart';
 import 'types/ad_config.dart';
+import 'types/ad_consent.dart';
 import 'types/ad_event.dart';
 import 'types/ad_format.dart';
 import 'types/ad_show_result.dart';
@@ -27,6 +28,14 @@ abstract class AdProvider {
   /// Releases SDK resources. Called when switching away from this
   /// provider.
   Future<void> dispose();
+
+  /// Re-applies updated consent signals to an already-initialized SDK —
+  /// the same fields [init] mapped, applied mid-session after the user
+  /// completes a consent flow. May throw if the SDK cannot comply at all
+  /// (e.g. MAX for a now-child-directed user); [AdManager] treats that
+  /// throw as "this provider can no longer serve this user" and switches
+  /// away.
+  Future<void> updateConsent(AdConsent consent);
 
   /// Requests the SDK start loading an ad for [format] ahead of when it's
   /// needed. A no-op for formats the SDK auto-loads (e.g. LevelPlay

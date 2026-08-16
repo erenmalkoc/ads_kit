@@ -165,6 +165,57 @@ void main() {
     });
   });
 
+  group('AdManager.updateConsent', () {
+    test('reaches the active provider without a reboot', () async {
+      final fake = FakeAdProvider('fake');
+      AdManager.register('fake', () => fake);
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+        }),
+      );
+
+      await AdManager.updateConsent(const AdConsent(gdprConsent: true));
+
+      expect(AdManager.activeProviderName, 'fake');
+      expect(fake.lastUpdatedConsent?.gdprConsent, isTrue);
+    });
+
+    test('switches away when the provider rejects the new consent', () async {
+      AdManager.register('picky', () => FakeAdProvider('picky', failUpdateConsent: true));
+      final backup = FakeAdProvider('backup');
+      AdManager.register('backup', () => backup);
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'picky',
+          'fallback_provider': 'backup',
+        }),
+      );
+
+      final events = <AdHealthEvent>[];
+      AdManager.healthEvents.listen(events.add);
+
+      const consent = AdConsent(isChildDirected: true);
+      await AdManager.updateConsent(consent);
+      await pumpEventLoop();
+
+      expect(AdManager.activeProviderName, 'backup');
+      expect(backup.lastInitConfig?.consent, consent,
+          reason: 'the fallback must init with the consent that was rejected');
+      final event = events.single as AdProviderSwitched;
+      expect(event.reason, ProviderSwitchReason.consentRejected);
+    });
+
+    test('direct updateConsent on AdManager.I is not supported', () async {
+      await AdManager.boot(configSource: FakeAdConfigSource(null));
+      expect(
+        () => AdManager.I.updateConsent(const AdConsent()),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
   group('AdManager.switchProvider', () {
     test('switches the live provider and disposes the old one', () async {
       final first = FakeAdProvider('first');

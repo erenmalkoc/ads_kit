@@ -5,13 +5,17 @@ import 'package:flutter/widgets.dart';
 
 /// A controllable [AdProvider] test double — no real ad SDK involved.
 class FakeAdProvider implements AdProvider {
-  FakeAdProvider(this.name, {this.failInit = false});
+  FakeAdProvider(this.name, {this.failInit = false, this.failUpdateConsent = false});
 
   @override
   final String name;
 
   /// When true, [init] throws instead of succeeding.
   final bool failInit;
+
+  /// When true, [updateConsent] throws — like MAX refusing a
+  /// child-directed user.
+  final bool failUpdateConsent;
 
   bool initialized = false;
   bool disposed = false;
@@ -20,6 +24,9 @@ class FakeAdProvider implements AdProvider {
   /// The [AdConfig] the last [init] call received, for asserting what
   /// AdManager actually hands to a provider.
   AdConfig? lastInitConfig;
+
+  /// The [AdConsent] the last [updateConsent] call received.
+  AdConsent? lastUpdatedConsent;
 
   AdShowResult interstitialResult = AdShowResult.shown();
   AdShowResult rewardedResult = AdShowResult.shown();
@@ -34,6 +41,12 @@ class FakeAdProvider implements AdProvider {
     lastInitConfig = config;
     if (failInit) throw Exception('$name: init failed');
     initialized = true;
+  }
+
+  @override
+  Future<void> updateConsent(AdConsent consent) async {
+    if (failUpdateConsent) throw Exception('$name: cannot serve this consent');
+    lastUpdatedConsent = consent;
   }
 
   @override

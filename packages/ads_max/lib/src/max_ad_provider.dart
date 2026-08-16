@@ -50,28 +50,17 @@ final class MaxAdProvider implements AdProvider {
 
   @override
   Future<void> init(AdConfig config) async {
-    if (config.consent.isChildDirected) {
-      // AppLovin's policy is that the SDK must not be initialized at all
-      // for a user classified as a child — there's no "child mode" flag
-      // to set (setIsAgeRestrictedUser was removed in MAX SDK v4.0.0 for
-      // exactly this reason). Throwing here is deliberate: AdManager
-      // treats an init() failure as "this provider is unavailable" and
-      // falls back through fallback_provider -> NoopAdProvider.
-      throw StateError(
-        'MaxAdProvider refuses to initialize for a child-directed user — '
-        'AppLovin MAX must not be used at all in that case.',
-      );
-    }
-
     final sdkKey = config.extras['sdk_key'];
     if (sdkKey == null || sdkKey.isEmpty) {
       throw StateError('MaxAdProvider.init requires AdConfig.extras["sdk_key"]');
     }
 
     // Consent must be set before initialize() to take effect for the very
-    // first ad request MAX makes.
-    max.AppLovinMAX.setHasUserConsent(config.consent.gdprConsent ?? false);
-    max.AppLovinMAX.setDoNotSell(config.consent.ccpaOptOut ?? true);
+    // first ad request MAX makes. Throws for a child-directed user before
+    // the SDK is ever touched — AdManager treats that init() failure as
+    // "this provider is unavailable" and falls back through
+    // fallback_provider -> NoopAdProvider.
+    await _applyConsent(config.consent);
     // ATT is requested by the app itself, never by this layer — MAX picks
     // up IDFA availability from the OS once the app has asked.
 
@@ -124,6 +113,25 @@ final class MaxAdProvider implements AdProvider {
 
   void _resolve(Completer<AdShowResult>? completer, AdShowResult result) {
     if (completer != null && !completer.isCompleted) completer.complete(result);
+  }
+
+  @override
+  Future<void> updateConsent(AdConsent consent) => _applyConsent(consent);
+
+  /// AppLovin's policy is that the SDK must not be used at all for a user
+  /// classified as a child — there's no "child mode" flag to set
+  /// (setIsAgeRestrictedUser was removed in MAX SDK v4.0.0 for exactly
+  /// this reason). Throwing is deliberate: AdManager treats it as "this
+  /// provider is unavailable for this user" and switches away.
+  Future<void> _applyConsent(AdConsent consent) async {
+    if (consent.isChildDirected) {
+      throw StateError(
+        'MaxAdProvider refuses to serve a child-directed user — '
+        'AppLovin MAX must not be used at all in that case.',
+      );
+    }
+    max.AppLovinMAX.setHasUserConsent(consent.gdprConsent ?? false);
+    max.AppLovinMAX.setDoNotSell(consent.ccpaOptOut ?? true);
   }
 
   @override
