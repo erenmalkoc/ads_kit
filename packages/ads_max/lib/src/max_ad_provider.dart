@@ -38,6 +38,11 @@ final class MaxAdProvider implements AdProvider {
   /// the user controls how long the ad stays open.
   static const _displayTimeout = Duration(seconds: 15);
 
+  /// How long [init] waits for the SDK to finish initializing — an SDK
+  /// that never calls back would otherwise hang AdManager mid-activation
+  /// instead of falling back.
+  static const _initTimeout = Duration(seconds: 30);
+
   Completer<AdShowResult>? _interstitialShow;
   Completer<AdShowResult>? _rewardedShow;
   Completer<AdShowResult>? _appOpenShow;
@@ -64,7 +69,8 @@ final class MaxAdProvider implements AdProvider {
     // ATT is requested by the app itself, never by this layer — MAX picks
     // up IDFA availability from the OS once the app has asked.
 
-    final configuration = await max.AppLovinMAX.initialize(sdkKey);
+    final configuration =
+        await max.AppLovinMAX.initialize(sdkKey).timeout(_initTimeout);
     if (configuration == null) {
       throw StateError('MaxAdProvider.init: AppLovinMAX.initialize returned null');
     }

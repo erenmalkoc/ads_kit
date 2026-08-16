@@ -28,6 +28,13 @@ final class LevelPlayAdProvider implements AdProvider {
   /// the user controls how long the ad stays open.
   static const _displayTimeout = Duration(seconds: 15);
 
+  /// How long [init] waits for the SDK's init callback. Observed in the
+  /// field: a freshly provisioned app key can leave the SDK initializing
+  /// forever without ever calling back — without this bound, AdManager
+  /// would hang mid-activation instead of falling back and letting
+  /// recovery retry later.
+  static const _initTimeout = Duration(seconds: 30);
+
   lp.LevelPlayInterstitialAd? _interstitial;
   lp.LevelPlayRewardedAd? _rewarded;
   String? _bannerAdUnitId;
@@ -69,8 +76,8 @@ final class LevelPlayAdProvider implements AdProvider {
     await lp.LevelPlay.init(
       initRequest: initBuilder.build(),
       initListener: LevelPlayInitListenerAdapter(initCompleter),
-    );
-    await initCompleter.future;
+    ).timeout(_initTimeout);
+    await initCompleter.future.timeout(_initTimeout);
 
     lp.LevelPlay.addImpressionDataListener(
       LevelPlayImpressionListenerAdapter(providerName: name, emit: _events.add),
