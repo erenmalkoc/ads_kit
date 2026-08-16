@@ -3,7 +3,8 @@ description: >
   AppLovin MAX implementation of the ads_core AdProvider contract. Wraps
   applovin_max — no ads_core-facing API here ever leaks a MAX SDK type.
 version: 0.1.0
-publish_to: none
+homepage: https://github.com/erenmalkoc/ads_kit
+repository: https://github.com/erenmalkoc/ads_kit/tree/main/packages/ads_max
 
 environment:
   sdk: ^3.11.0

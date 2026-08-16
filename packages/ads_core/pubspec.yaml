@@ -1,11 +1,11 @@
 name: ads_core
-description: >
-  Mediation-platform-independent ad abstraction contract. Defines the
-  AdProvider interface, AdManager entry point, frequency guarding, health
-  monitoring and remote-config-driven provider selection. Contains zero
-  dependencies on any ad network SDK.
+description: >-
+  Mediation-platform-independent ad abstraction: AdProvider contract,
+  AdManager, frequency capping, health monitoring and remote-config-driven
+  provider selection.
 version: 0.1.0
-publish_to: none
+homepage: https://github.com/erenmalkoc/ads_kit
+repository: https://github.com/erenmalkoc/ads_kit/tree/main/packages/ads_core
 
 environment:
   sdk: ^3.11.0

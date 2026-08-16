@@ -4,7 +4,8 @@ description: >
   contract. Wraps unity_levelplay_mediation — no ads_core-facing API here
   ever leaks a LevelPlay SDK type.
 version: 0.1.0
-publish_to: none
+homepage: https://github.com/erenmalkoc/ads_kit
+repository: https://github.com/erenmalkoc/ads_kit/tree/main/packages/ads_levelplay
 
 environment:
   sdk: ^3.11.0
