@@ -85,6 +85,49 @@ void main() {
       expect(config.disabledCountries, {'US', 'GB'});
     });
 
+    test('parses a providers block into per-provider extras', () {
+      final config = AdRuntimeConfig.fromJson(const {
+        'providers': {
+          'levelplay': {
+            'app_key_android': 'droid_key',
+            'app_key_ios': 'ios_key',
+            'interstitial_ad_unit_id': 'i1',
+          },
+          'max': {'sdk_key': 's1'},
+        },
+      });
+
+      expect(config.providerExtras, {
+        'levelplay': {
+          'app_key_android': 'droid_key',
+          'app_key_ios': 'ios_key',
+          'interstitial_ad_unit_id': 'i1',
+        },
+        'max': {'sdk_key': 's1'},
+      });
+    });
+
+    test('non-string values inside a providers entry are dropped', () {
+      final config = AdRuntimeConfig.fromJson(const {
+        'providers': {
+          'levelplay': {'app_key': 'k', 'retries': 3, 'flag': true},
+          42: {'ignored': 'x'},
+          'broken': 'not_a_map',
+        },
+      });
+
+      expect(config.providerExtras, {
+        'levelplay': {'app_key': 'k'},
+      });
+    });
+
+    test('a providers value that is not a map falls back to default', () {
+      final config = AdRuntimeConfig.fromJson(const {
+        'providers': ['levelplay'],
+      });
+      expect(config.providerExtras, isEmpty);
+    });
+
     test('double values for integer/duration fields are coerced, not dropped', () {
       final config = AdRuntimeConfig.fromJson(const {
         'interstitial_max_per_session': 3.0,

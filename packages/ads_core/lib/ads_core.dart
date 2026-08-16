@@ -14,6 +14,7 @@ export 'src/providers/noop_ad_provider.dart';
 export 'src/remote_config/ad_config_source.dart';
 export 'src/remote_config/ad_runtime_config.dart';
 export 'src/remote_config/firebase_ad_config_source.dart';
+export 'src/remote_config/provider_extras.dart';
 export 'src/types/ad_banner_size.dart';
 export 'src/types/ad_config.dart';
 export 'src/types/ad_consent.dart';

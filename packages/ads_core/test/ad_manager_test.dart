@@ -1,4 +1,5 @@
 import 'package:ads_core/ads_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -111,6 +112,56 @@ void main() {
       );
 
       expect(AdManager.activeProviderName, 'backup');
+    });
+  });
+
+  group('AdManager provider extras plumbing', () {
+    test('boot merges boot-time and remote-config extras into init', () async {
+      final fake = FakeAdProvider('fake');
+      AdManager.register('fake', () => fake);
+
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+          'providers': {
+            'fake': {
+              'app_key_android': 'remote_droid_key',
+              'interstitial_ad_unit_id': 'remote_inter',
+            },
+          },
+        }),
+        providerExtras: {
+          'fake': {
+            'app_key_android': 'boot_droid_key',
+            'banner_ad_unit_id': 'boot_banner',
+          },
+        },
+      );
+
+      expect(AdManager.activeProviderName, 'fake');
+      expect(fake.lastInitConfig?.extras, {
+        'app_key': 'remote_droid_key',
+        'interstitial_ad_unit_id': 'remote_inter',
+        'banner_ad_unit_id': 'boot_banner',
+      });
+    });
+
+    test('a provider with no extras configured receives an empty map', () async {
+      final fake = FakeAdProvider('fake');
+      AdManager.register('fake', () => fake);
+
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+        }),
+      );
+
+      expect(fake.lastInitConfig?.extras, isEmpty);
     });
   });
 

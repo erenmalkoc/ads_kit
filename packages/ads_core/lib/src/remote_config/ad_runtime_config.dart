@@ -13,6 +13,7 @@ final class AdRuntimeConfig {
     required this.coldStartGrace,
     required this.disabledCountries,
     required this.healthFailureThreshold,
+    required this.providerExtras,
   });
 
   /// No remote config reachable, or it's unparseable: show nothing.
@@ -26,6 +27,7 @@ final class AdRuntimeConfig {
     coldStartGrace: Duration(seconds: 30),
     disabledCountries: {},
     healthFailureThreshold: 3,
+    providerExtras: {},
   );
 
   final String activeProvider;
@@ -38,6 +40,13 @@ final class AdRuntimeConfig {
   /// Uppercase ISO 3166-1 alpha-2 codes.
   final Set<String> disabledCountries;
   final int healthFailureThreshold;
+
+  /// Per-provider `AdConfig.extras` values keyed by provider name, from the
+  /// config's `providers` object (e.g. `providers.levelplay.app_key`).
+  /// Merged over any boot-time extras by [AdManager], so keys like ad unit
+  /// ids can change without a store release. Supports `_android`/`_ios`
+  /// key suffixes for per-platform values — see [resolveProviderExtras].
+  final Map<String, Map<String, String>> providerExtras;
 
   /// Parses a raw JSON map field-by-field: a missing or wrong-typed key
   /// falls back to [safeDefaults]'s value for just that field, rather than
@@ -65,6 +74,8 @@ final class AdRuntimeConfig {
           safeDefaults.disabledCountries,
       healthFailureThreshold: _readInt(raw, 'health_failure_threshold') ??
           safeDefaults.healthFailureThreshold,
+      providerExtras: _readProviderExtras(raw['providers']) ??
+          safeDefaults.providerExtras,
     );
   }
 
@@ -98,6 +109,20 @@ final class AdRuntimeConfig {
       }
     }
     return formats;
+  }
+
+  static Map<String, Map<String, String>>? _readProviderExtras(dynamic value) {
+    if (value is! Map) return null;
+    final providers = <String, Map<String, String>>{};
+    value.forEach((providerKey, entries) {
+      if (providerKey is! String || entries is! Map) return;
+      final extras = <String, String>{};
+      entries.forEach((key, entryValue) {
+        if (key is String && entryValue is String) extras[key] = entryValue;
+      });
+      providers[providerKey] = extras;
+    });
+    return providers;
   }
 
   static Set<String>? _readCountries(dynamic value) {

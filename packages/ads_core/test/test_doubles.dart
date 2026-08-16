@@ -17,6 +17,10 @@ class FakeAdProvider implements AdProvider {
   bool disposed = false;
   int initCallCount = 0;
 
+  /// The [AdConfig] the last [init] call received, for asserting what
+  /// AdManager actually hands to a provider.
+  AdConfig? lastInitConfig;
+
   AdShowResult interstitialResult = AdShowResult.shown();
   AdShowResult rewardedResult = AdShowResult.shown();
   AdShowResult appOpenResult = AdShowResult.shown();
@@ -27,6 +31,7 @@ class FakeAdProvider implements AdProvider {
   @override
   Future<void> init(AdConfig config) async {
     initCallCount++;
+    lastInitConfig = config;
     if (failInit) throw Exception('$name: init failed');
     initialized = true;
   }

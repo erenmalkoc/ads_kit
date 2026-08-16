@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'ad_health_event.dart';
@@ -10,6 +11,7 @@ import 'providers/noop_ad_provider.dart';
 import 'remote_config/ad_config_source.dart';
 import 'remote_config/ad_runtime_config.dart';
 import 'remote_config/firebase_ad_config_source.dart';
+import 'remote_config/provider_extras.dart';
 import 'types/ad_banner_size.dart';
 import 'types/ad_config.dart';
 import 'types/ad_consent.dart';
@@ -38,6 +40,7 @@ final class AdManager {
   static AdRuntimeConfig _config = AdRuntimeConfig.safeDefaults;
   static AdConsent _consent = const AdConsent();
   static String? _countryCode;
+  static Map<String, Map<String, String>> _bootProviderExtras = const {};
 
   static FrequencyGuard _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
   static HealthMonitor _healthMonitor =
@@ -77,13 +80,22 @@ final class AdManager {
   /// Resolution order: configured `active_provider` -> configured
   /// `fallback_provider` -> [NoopAdProvider]. Never throws — any failure
   /// anywhere in this chain lands on noop.
+  ///
+  /// [providerExtras] carries each provider's `AdConfig.extras` (app/SDK
+  /// keys, ad unit ids), keyed by provider name. Remote config's
+  /// `providers` object is merged on top of it, so a value can start
+  /// hardcoded here and later be overridden without a release. Keys may
+  /// use `_android`/`_ios` suffixes for per-platform values — see
+  /// [resolveProviderExtras].
   static Future<void> boot({
     AdConfigSource? configSource,
     AdConsent consent = const AdConsent(),
     String? countryCode,
+    Map<String, Map<String, String>> providerExtras = const {},
   }) async {
     _consent = consent;
     _countryCode = countryCode;
+    _bootProviderExtras = providerExtras;
 
     final source = configSource ?? FirebaseAdConfigSource();
     Map<String, dynamic>? raw;
@@ -127,6 +139,7 @@ final class AdManager {
     _config = AdRuntimeConfig.safeDefaults;
     _consent = const AdConsent();
     _countryCode = null;
+    _bootProviderExtras = const {};
     _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
     _healthMonitor =
         HealthMonitor(failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold);
@@ -142,11 +155,30 @@ final class AdManager {
         ),
       );
 
-  static AdConfig _currentAdConfig() => AdConfig(
+  static AdConfig _currentAdConfig(String providerKey) => AdConfig(
         consent: _consent,
         formatsEnabled: _config.formatsEnabled,
         countryCode: _countryCode,
+        extras: resolveProviderExtras(
+          bootExtras: _bootProviderExtras[providerKey] ?? const {},
+          remoteExtras: _config.providerExtras[providerKey] ?? const {},
+          platformSuffix: _platformSuffix,
+        ),
       );
+
+  static String get _platformSuffix {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return '';
+    }
+  }
 
   static Future<AdProvider?> _tryCreateAndInit(String key) async {
     final factory = _factories[key];
@@ -160,7 +192,7 @@ final class AdManager {
     }
 
     try {
-      await provider.init(_currentAdConfig());
+      await provider.init(_currentAdConfig(key));
       return provider;
     } catch (_) {
       unawaited(_safeDispose(provider));
@@ -190,7 +222,7 @@ final class AdManager {
 
     if (provider == null && resolvedKey != 'noop') {
       final noop = NoopAdProvider();
-      await noop.init(_currentAdConfig());
+      await noop.init(_currentAdConfig('noop'));
       provider = noop;
       resolvedKey = 'noop';
       resolvedReason = ProviderSwitchReason.initFailed;
