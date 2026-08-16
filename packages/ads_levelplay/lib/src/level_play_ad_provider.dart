@@ -124,7 +124,7 @@ final class LevelPlayAdProvider implements AdProvider {
   Future<void> updateConsent(AdConsent consent) => _applyConsent(consent);
 
   /// LevelPlay.setConsent is deprecated in favor of
-  /// LevelPlayPrivacySettings.setGDPRConsents(Map<network, bool>) — but
+  /// `LevelPlayPrivacySettings.setGDPRConsents(Map<network, bool>)` — but
   /// that API wants per-network consent, which AdConsent doesn't model
   /// (it's a single app-wide GDPR flag). Using the deprecated whole-SDK
   /// setter is the correct fit until ads_core grows per-network consent,
