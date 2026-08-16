@@ -55,8 +55,13 @@ class FakeAdProvider implements AdProvider {
     await _events.close();
   }
 
+  /// Formats [preload] has been called with, in order.
+  final preloadedFormats = <AdFormat>[];
+
   @override
-  Future<void> preload(AdFormat format) async {}
+  Future<void> preload(AdFormat format) async {
+    preloadedFormats.add(format);
+  }
 
   @override
   Future<bool> isReady(AdFormat format) async => ready;

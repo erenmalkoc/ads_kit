@@ -256,6 +256,22 @@ final class AdManager {
     _healthMonitor.reset(resolvedKey);
     _managed._bindTo(provider, resolvedKey);
 
+    // Kick off loading for every enabled fullscreen format so the first
+    // show attempt isn't a guaranteed not_ready. Banner is excluded — its
+    // platform view loads itself once mounted. Fire-and-forget: failures
+    // surface as AdEventFailed on the events stream, not here.
+    for (final format in _config.formatsEnabled) {
+      switch (format) {
+        case AdFormat.interstitial:
+        case AdFormat.rewarded:
+        case AdFormat.appOpen:
+          unawaited(_managed.preload(format));
+        case AdFormat.banner:
+        case AdFormat.native:
+          break;
+      }
+    }
+
     final shouldEmit = resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
     if (shouldEmit) {
       _healthEvents.add(AdProviderSwitched(

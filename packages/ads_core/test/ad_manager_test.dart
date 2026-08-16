@@ -165,6 +165,42 @@ void main() {
     });
   });
 
+  group('AdManager auto-preload', () {
+    test('boot preloads enabled fullscreen formats, not banner', () async {
+      final fake = FakeAdProvider('fake');
+      AdManager.register('fake', () => fake);
+
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+          'formats_enabled': ['interstitial', 'rewarded', 'banner'],
+        }),
+      );
+      await pumpEventLoop();
+
+      expect(
+        fake.preloadedFormats,
+        unorderedEquals([AdFormat.interstitial, AdFormat.rewarded]),
+      );
+    });
+
+    test('no enabled formats means nothing is preloaded', () async {
+      final fake = FakeAdProvider('fake');
+      AdManager.register('fake', () => fake);
+
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+        }),
+      );
+      await pumpEventLoop();
+
+      expect(fake.preloadedFormats, isEmpty);
+    });
+  });
+
   group('AdManager.updateConsent', () {
     test('reaches the active provider without a reboot', () async {
       final fake = FakeAdProvider('fake');
