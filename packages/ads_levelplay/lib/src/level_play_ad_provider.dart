@@ -23,12 +23,19 @@ import 'level_play_listeners.dart';
 final class LevelPlayAdProvider implements AdProvider {
   final _events = StreamController<AdEvent>.broadcast();
 
+  /// How long a `show*` call waits for the SDK's "displayed" callback
+  /// before giving up. Once display is confirmed there is no timeout —
+  /// the user controls how long the ad stays open.
+  static const _displayTimeout = Duration(seconds: 15);
+
   lp.LevelPlayInterstitialAd? _interstitial;
   lp.LevelPlayRewardedAd? _rewarded;
   String? _bannerAdUnitId;
 
   Completer<AdShowResult>? _interstitialShow;
   Completer<AdShowResult>? _rewardedShow;
+  bool _interstitialDisplayed = false;
+  bool _rewardedDisplayed = false;
 
   @override
   String get name => 'levelplay';
@@ -74,6 +81,7 @@ final class LevelPlayAdProvider implements AdProvider {
           ..setListener(LevelPlayInterstitialListenerAdapter(
             providerName: name,
             emit: _events.add,
+            onDisplayStarted: () => _interstitialDisplayed = true,
             onShowCompleted: (result) {
               final completer = _interstitialShow;
               _interstitialShow = null;
@@ -92,6 +100,7 @@ final class LevelPlayAdProvider implements AdProvider {
           ..setListener(LevelPlayRewardedListenerAdapter(
             providerName: name,
             emit: _events.add,
+            onDisplayStarted: () => _rewardedDisplayed = true,
             onShowCompleted: (result) {
               final completer = _rewardedShow;
               _rewardedShow = null;
@@ -155,7 +164,13 @@ final class LevelPlayAdProvider implements AdProvider {
 
     final completer = Completer<AdShowResult>();
     _interstitialShow = completer;
+    _interstitialDisplayed = false;
     await ad.showAd(placementName: placement);
+    _failUnlessDisplayed(
+      format: AdFormat.interstitial,
+      completer: completer,
+      isDisplayed: () => _interstitialDisplayed,
+    );
     return completer.future;
   }
 
@@ -167,8 +182,39 @@ final class LevelPlayAdProvider implements AdProvider {
 
     final completer = Completer<AdShowResult>();
     _rewardedShow = completer;
+    _rewardedDisplayed = false;
     await ad.showAd(placementName: placement);
+    _failUnlessDisplayed(
+      format: AdFormat.rewarded,
+      completer: completer,
+      isDisplayed: () => _rewardedDisplayed,
+    );
     return completer.future;
+  }
+
+  /// Backstop for the SDK never confirming display after `showAd` — the
+  /// show future would otherwise hang forever. Emits [AdEventFailed] too so
+  /// the health monitor counts it like any other show failure.
+  void _failUnlessDisplayed({
+    required AdFormat format,
+    required Completer<AdShowResult> completer,
+    required bool Function() isDisplayed,
+  }) {
+    Timer(_displayTimeout, () {
+      if (completer.isCompleted || isDisplayed()) return;
+      final error = AdError(
+        code: 'display_timeout',
+        message: 'no ${format.name} display callback within '
+            '${_displayTimeout.inSeconds}s of showAd',
+        providerName: name,
+      );
+      _events.add(AdEventFailed(
+        format: format,
+        providerName: name,
+        error: error,
+      ));
+      completer.complete(AdShowResult.failed(error));
+    });
   }
 
   @override

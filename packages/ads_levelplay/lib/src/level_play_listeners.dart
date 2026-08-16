@@ -38,11 +38,17 @@ final class LevelPlayInterstitialListenerAdapter
   LevelPlayInterstitialListenerAdapter({
     required this.providerName,
     required this.emit,
+    required this.onDisplayStarted,
     required this.onShowCompleted,
   });
 
   final String providerName;
   final void Function(AdEvent event) emit;
+
+  /// Fired at the SDK's "displayed" callback so the provider can cancel
+  /// its display timeout; the show future itself resolves at close via
+  /// [onShowCompleted].
+  final void Function() onDisplayStarted;
   final void Function(AdShowResult result) onShowCompleted;
 
   @override
@@ -68,12 +74,12 @@ final class LevelPlayInterstitialListenerAdapter
 
   @override
   void onAdDisplayed(lp.LevelPlayAdInfo adInfo) {
+    onDisplayStarted();
     emit(AdEventShown(
       format: AdFormat.interstitial,
       providerName: providerName,
       placement: adInfo.placementName,
     ));
-    onShowCompleted(AdShowResult.shown());
   }
 
   @override
@@ -100,11 +106,14 @@ final class LevelPlayInterstitialListenerAdapter
       ));
 
   @override
-  void onAdClosed(lp.LevelPlayAdInfo adInfo) => emit(AdEventDismissed(
-        format: AdFormat.interstitial,
-        providerName: providerName,
-        placement: adInfo.placementName,
-      ));
+  void onAdClosed(lp.LevelPlayAdInfo adInfo) {
+    emit(AdEventDismissed(
+      format: AdFormat.interstitial,
+      providerName: providerName,
+      placement: adInfo.placementName,
+    ));
+    onShowCompleted(AdShowResult.shown());
+  }
 }
 
 final class LevelPlayRewardedListenerAdapter
@@ -112,11 +121,17 @@ final class LevelPlayRewardedListenerAdapter
   LevelPlayRewardedListenerAdapter({
     required this.providerName,
     required this.emit,
+    required this.onDisplayStarted,
     required this.onShowCompleted,
   });
 
   final String providerName;
   final void Function(AdEvent event) emit;
+
+  /// Fired at the SDK's "displayed" callback so the provider can cancel
+  /// its display timeout; the show future itself resolves at close via
+  /// [onShowCompleted].
+  final void Function() onDisplayStarted;
   final void Function(AdShowResult result) onShowCompleted;
 
   bool _rewardEarnedThisShow = false;
@@ -145,6 +160,7 @@ final class LevelPlayRewardedListenerAdapter
   @override
   void onAdDisplayed(lp.LevelPlayAdInfo adInfo) {
     _rewardEarnedThisShow = false;
+    onDisplayStarted();
     emit(AdEventShown(
       format: AdFormat.rewarded,
       providerName: providerName,

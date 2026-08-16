@@ -33,9 +33,17 @@ final class MaxAdProvider implements AdProvider {
   String? _bannerAdUnitId;
   String? _mrecAdUnitId;
 
+  /// How long a `show*` call waits for the SDK's "displayed" callback
+  /// before giving up. Once display is confirmed there is no timeout —
+  /// the user controls how long the ad stays open.
+  static const _displayTimeout = Duration(seconds: 15);
+
   Completer<AdShowResult>? _interstitialShow;
   Completer<AdShowResult>? _rewardedShow;
   Completer<AdShowResult>? _appOpenShow;
+  bool _interstitialDisplayed = false;
+  bool _rewardedDisplayed = false;
+  bool _appOpenDisplayed = false;
 
   @override
   String get name => 'max';
@@ -92,6 +100,7 @@ final class MaxAdProvider implements AdProvider {
       max.AppLovinMAX.setInterstitialListener(buildInterstitialListener(
         providerName: name,
         emit: _events.add,
+        onDisplayStarted: () => _interstitialDisplayed = true,
         onShowCompleted: (result) => _resolve(_interstitialShow, result),
       ));
     }
@@ -99,6 +108,7 @@ final class MaxAdProvider implements AdProvider {
       max.AppLovinMAX.setRewardedAdListener(buildRewardedListener(
         providerName: name,
         emit: _events.add,
+        onDisplayStarted: () => _rewardedDisplayed = true,
         onShowCompleted: (result) => _resolve(_rewardedShow, result),
       ));
     }
@@ -106,6 +116,7 @@ final class MaxAdProvider implements AdProvider {
       max.AppLovinMAX.setAppOpenAdListener(buildAppOpenListener(
         providerName: name,
         emit: _events.add,
+        onDisplayStarted: () => _appOpenDisplayed = true,
         onShowCompleted: (result) => _resolve(_appOpenShow, result),
       ));
     }
@@ -172,7 +183,13 @@ final class MaxAdProvider implements AdProvider {
 
     final completer = Completer<AdShowResult>();
     _interstitialShow = completer;
+    _interstitialDisplayed = false;
     max.AppLovinMAX.showInterstitial(id, placement: placement);
+    _failUnlessDisplayed(
+      format: AdFormat.interstitial,
+      completer: completer,
+      isDisplayed: () => _interstitialDisplayed,
+    );
     return completer.future;
   }
 
@@ -186,7 +203,13 @@ final class MaxAdProvider implements AdProvider {
 
     final completer = Completer<AdShowResult>();
     _rewardedShow = completer;
+    _rewardedDisplayed = false;
     max.AppLovinMAX.showRewardedAd(id, placement: placement);
+    _failUnlessDisplayed(
+      format: AdFormat.rewarded,
+      completer: completer,
+      isDisplayed: () => _rewardedDisplayed,
+    );
     return completer.future;
   }
 
@@ -200,8 +223,39 @@ final class MaxAdProvider implements AdProvider {
 
     final completer = Completer<AdShowResult>();
     _appOpenShow = completer;
+    _appOpenDisplayed = false;
     max.AppLovinMAX.showAppOpenAd(id, placement: placement);
+    _failUnlessDisplayed(
+      format: AdFormat.appOpen,
+      completer: completer,
+      isDisplayed: () => _appOpenDisplayed,
+    );
     return completer.future;
+  }
+
+  /// Backstop for the SDK never confirming display after a show call — the
+  /// show future would otherwise hang forever. Emits [AdEventFailed] too so
+  /// the health monitor counts it like any other show failure.
+  void _failUnlessDisplayed({
+    required AdFormat format,
+    required Completer<AdShowResult> completer,
+    required bool Function() isDisplayed,
+  }) {
+    Timer(_displayTimeout, () {
+      if (completer.isCompleted || isDisplayed()) return;
+      final error = AdError(
+        code: 'display_timeout',
+        message: 'no ${format.name} display callback within '
+            '${_displayTimeout.inSeconds}s of show',
+        providerName: name,
+      );
+      _events.add(AdEventFailed(
+        format: format,
+        providerName: name,
+        error: error,
+      ));
+      completer.complete(AdShowResult.failed(error));
+    });
   }
 
   AdShowResult _notConfigured(AdFormat format) => AdShowResult.failed(AdError(

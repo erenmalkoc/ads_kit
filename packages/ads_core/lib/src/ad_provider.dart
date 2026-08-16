@@ -37,10 +37,21 @@ abstract class AdProvider {
   /// immediately.
   Future<bool> isReady(AdFormat format);
 
+  /// Shows a loaded fullscreen ad. The returned future resolves once the
+  /// ad has been *dismissed* (or immediately on suppression/failure) —
+  /// never at display time — so a call site can `await` it and safely
+  /// continue its flow (navigate, resume audio, grant a reward) the moment
+  /// it completes. Implementations must also guard against an SDK that
+  /// never confirms display, failing the future with `display_timeout`
+  /// instead of hanging forever.
   Future<AdShowResult> showInterstitial({String? placement});
 
+  /// See [showInterstitial] for the dismissal-completion contract.
+  /// `AdShowResult.rewardEarned` reports whether the user earned the
+  /// reward before dismissing.
   Future<AdShowResult> showRewarded({String? placement});
 
+  /// See [showInterstitial] for the dismissal-completion contract.
   Future<AdShowResult> showAppOpen({String? placement});
 
   /// Returns this provider's own banner platform view. Each provider

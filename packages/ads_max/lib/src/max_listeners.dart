@@ -25,6 +25,7 @@ AdRevenue _mapRevenue(max.MaxAd ad) => maxAdToAdRevenue(
 max.InterstitialListener buildInterstitialListener({
   required String providerName,
   required void Function(AdEvent event) emit,
+  required void Function() onDisplayStarted,
   required void Function(AdShowResult result) onShowCompleted,
 }) {
   return max.InterstitialListener(
@@ -39,12 +40,12 @@ max.InterstitialListener buildInterstitialListener({
       error: _mapError(error, providerName),
     )),
     onAdDisplayedCallback: (ad) {
+      onDisplayStarted();
       emit(AdEventShown(
         format: AdFormat.interstitial,
         providerName: providerName,
         placement: ad.placement,
       ));
-      onShowCompleted(AdShowResult.shown());
     },
     onAdDisplayFailedCallback: (ad, error) {
       final adError = _mapError(error, providerName);
@@ -61,11 +62,14 @@ max.InterstitialListener buildInterstitialListener({
       providerName: providerName,
       placement: ad.placement,
     )),
-    onAdHiddenCallback: (ad) => emit(AdEventDismissed(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
+    onAdHiddenCallback: (ad) {
+      emit(AdEventDismissed(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        placement: ad.placement,
+      ));
+      onShowCompleted(AdShowResult.shown());
+    },
     onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
       format: AdFormat.interstitial,
       providerName: providerName,
@@ -78,6 +82,7 @@ max.InterstitialListener buildInterstitialListener({
 max.RewardedAdListener buildRewardedListener({
   required String providerName,
   required void Function(AdEvent event) emit,
+  required void Function() onDisplayStarted,
   required void Function(AdShowResult result) onShowCompleted,
 }) {
   var rewardEarnedThisShow = false;
@@ -95,6 +100,7 @@ max.RewardedAdListener buildRewardedListener({
     )),
     onAdDisplayedCallback: (ad) {
       rewardEarnedThisShow = false;
+      onDisplayStarted();
       emit(AdEventShown(
         format: AdFormat.rewarded,
         providerName: providerName,
@@ -146,6 +152,7 @@ max.RewardedAdListener buildRewardedListener({
 max.AppOpenAdListener buildAppOpenListener({
   required String providerName,
   required void Function(AdEvent event) emit,
+  required void Function() onDisplayStarted,
   required void Function(AdShowResult result) onShowCompleted,
 }) {
   return max.AppOpenAdListener(
@@ -160,12 +167,12 @@ max.AppOpenAdListener buildAppOpenListener({
       error: _mapError(error, providerName),
     )),
     onAdDisplayedCallback: (ad) {
+      onDisplayStarted();
       emit(AdEventShown(
         format: AdFormat.appOpen,
         providerName: providerName,
         placement: ad.placement,
       ));
-      onShowCompleted(AdShowResult.shown());
     },
     onAdDisplayFailedCallback: (ad, error) {
       final adError = _mapError(error, providerName);
@@ -182,11 +189,14 @@ max.AppOpenAdListener buildAppOpenListener({
       providerName: providerName,
       placement: ad.placement,
     )),
-    onAdHiddenCallback: (ad) => emit(AdEventDismissed(
-      format: AdFormat.appOpen,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
+    onAdHiddenCallback: (ad) {
+      emit(AdEventDismissed(
+        format: AdFormat.appOpen,
+        providerName: providerName,
+        placement: ad.placement,
+      ));
+      onShowCompleted(AdShowResult.shown());
+    },
     onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
       format: AdFormat.appOpen,
       providerName: providerName,
