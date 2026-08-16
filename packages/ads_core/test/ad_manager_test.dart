@@ -362,6 +362,37 @@ void main() {
       expect(AdManager.activeProviderName, 'backup');
     });
 
+    test('no-fill failures never count toward the health threshold', () async {
+      final primary = FakeAdProvider('primary');
+      AdManager.register('primary', () => primary);
+      AdManager.register('backup', () => FakeAdProvider('backup'));
+
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'primary',
+          'fallback_provider': 'backup',
+          'health_failure_threshold': 2,
+        }),
+      );
+
+      for (var i = 0; i < 5; i++) {
+        primary.emit(AdEventFailed(
+          format: AdFormat.rewarded,
+          providerName: 'primary',
+          error: AdError(
+            code: 'levelplay_509',
+            message: 'Mediation No fill',
+            providerName: 'primary',
+            isNoFill: true,
+          ),
+        ));
+        await pumpEventLoop();
+      }
+
+      expect(AdManager.activeProviderName, 'primary',
+          reason: 'no fill is inventory, not provider health');
+    });
+
     test('a success in between resets the failure streak', () async {
       final primary = FakeAdProvider('primary');
       AdManager.register('primary', () => primary);

@@ -7,6 +7,7 @@ final class AdError {
     required this.code,
     required this.message,
     required this.providerName,
+    this.isNoFill = false,
     this.cause,
   });
 
@@ -20,6 +21,13 @@ final class AdError {
   /// The provider key (e.g. `"levelplay"`, `"max"`, `"noop"`) that raised
   /// this error.
   final String providerName;
+
+  /// Normalized "the auction returned no ad" flag, set by each provider's
+  /// error mapper. No fill is an inventory condition, not a provider
+  /// malfunction — [HealthMonitor] must not count it toward a fallback
+  /// decision, or a freshly provisioned app with warming-up demand keeps
+  /// bouncing to noop.
+  final bool isNoFill;
 
   /// Original SDK error object, kept only so it can be logged upstream.
   /// Never inspect its runtime type outside a provider package.

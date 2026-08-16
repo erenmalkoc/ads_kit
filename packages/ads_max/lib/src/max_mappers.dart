@@ -52,6 +52,7 @@ AdError maxErrorToAdError({
       code: 'max_$errorCodeName',
       message: message,
       providerName: providerName,
+      isNoFill: errorCodeName == 'noFill',
     );
 
 AdEventRewardEarned maxRewardToAdEvent({

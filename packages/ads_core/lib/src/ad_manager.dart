@@ -393,6 +393,9 @@ final class _ManagedAdProvider implements AdProvider {
   void _trackHealth(AdEvent event, String key) {
     switch (event) {
       case AdEventFailed():
+        // No fill means the provider is healthy but had nothing to serve —
+        // counting it would demote a working provider on slow inventory.
+        if (event.error.isNoFill) return;
         final tripped = AdManager._healthMonitor.recordFailure(key);
         if (tripped) _escalateAfterHealthTrip(key);
       case AdEventLoaded():

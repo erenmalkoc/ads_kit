@@ -48,6 +48,16 @@ void main() {
       expect(error.code, 'max_noFill');
       expect(error.message, 'No ad fill');
       expect(error.providerName, 'max');
+      expect(error.isNoFill, isTrue);
+    });
+
+    test('non-noFill codes stay unflagged', () {
+      final error = maxErrorToAdError(
+        errorCodeName: 'networkError',
+        message: 'timeout',
+        providerName: 'max',
+      );
+      expect(error.isNoFill, isFalse);
     });
   });
 

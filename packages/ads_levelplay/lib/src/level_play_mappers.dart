@@ -55,6 +55,11 @@ AdError levelPlayErrorToAdError({
       code: 'levelplay_$errorCode',
       message: errorMessage,
       providerName: providerName,
+      // 509 is ironSource's documented "no ads to show"; the message match
+      // is a defensive net since the int codes aren't a published enum
+      // (observed live: 509 "Mediation No fill").
+      isNoFill: errorCode == 509 ||
+          errorMessage.toLowerCase().contains('no fill'),
     );
 
 /// The global impression-data listener fires for every ad format at once,

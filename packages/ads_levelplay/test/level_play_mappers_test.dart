@@ -63,6 +63,34 @@ void main() {
       expect(error.message, 'no fill');
       expect(error.providerName, 'levelplay');
     });
+
+    test('flags no fill by code 509 or message, other errors stay unflagged', () {
+      expect(
+        levelPlayErrorToAdError(
+          errorCode: 509,
+          errorMessage: 'Mediation No fill',
+          providerName: 'levelplay',
+        ).isNoFill,
+        isTrue,
+      );
+      expect(
+        levelPlayErrorToAdError(
+          errorCode: 1022,
+          errorMessage: 'Mediation No Fill',
+          providerName: 'levelplay',
+        ).isNoFill,
+        isTrue,
+        reason: 'message match must catch no fill under an unknown code',
+      );
+      expect(
+        levelPlayErrorToAdError(
+          errorCode: 510,
+          errorMessage: 'internal error',
+          providerName: 'levelplay',
+        ).isNoFill,
+        isFalse,
+      );
+    });
   });
 
   group('mapLevelPlayImpressionFormat', () {
