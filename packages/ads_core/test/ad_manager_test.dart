@@ -1,4 +1,5 @@
 import 'package:ads_core/ads_core.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -361,6 +362,96 @@ void main() {
       await pumpEventLoop();
 
       expect(AdManager.activeProviderName, 'primary');
+    });
+
+    test('retries the configured provider after the cooldown and recovers', () {
+      fakeAsync((async) {
+        var primaryHealthy = false;
+        AdManager.register(
+          'primary',
+          () => FakeAdProvider('primary', failInit: !primaryHealthy),
+        );
+        AdManager.register('backup', () => FakeAdProvider('backup'));
+
+        final events = <AdHealthEvent>[];
+        AdManager.healthEvents.listen(events.add);
+
+        AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'recovery_cooldown_sec': 60,
+          }),
+        );
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'backup');
+
+        primaryHealthy = true;
+        async.elapse(const Duration(seconds: 61));
+        async.flushMicrotasks();
+
+        expect(AdManager.activeProviderName, 'primary');
+        final last = events.whereType<AdProviderSwitched>().last;
+        expect(last.reason, ProviderSwitchReason.recovered);
+        expect(last.fromProvider, 'backup');
+      });
+    });
+
+    test('stops retrying after recovery_max_attempts', () {
+      fakeAsync((async) {
+        var primaryBuilds = 0;
+        AdManager.register('primary', () {
+          primaryBuilds++;
+          return FakeAdProvider('primary', failInit: true);
+        });
+        AdManager.register('backup', () => FakeAdProvider('backup'));
+
+        AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'recovery_cooldown_sec': 60,
+            'recovery_max_attempts': 2,
+          }),
+        );
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'backup');
+        final buildsAfterBoot = primaryBuilds;
+
+        async.elapse(const Duration(minutes: 30));
+        async.flushMicrotasks();
+
+        expect(AdManager.activeProviderName, 'backup');
+        expect(primaryBuilds, buildsAfterBoot + 2,
+            reason: 'exactly recovery_max_attempts retries, then silence');
+      });
+    });
+
+    test('a manual switch cancels pending recovery', () {
+      fakeAsync((async) {
+        AdManager.register('primary', () => FakeAdProvider('primary', failInit: true));
+        AdManager.register('backup', () => FakeAdProvider('backup'));
+        AdManager.register('manualPick', () => FakeAdProvider('manualPick'));
+
+        AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'recovery_cooldown_sec': 60,
+          }),
+        );
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'backup');
+
+        AdManager.switchProvider('manualPick');
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'manualPick');
+
+        async.elapse(const Duration(minutes: 30));
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'manualPick',
+            reason: 'recovery must not fight an explicit manual choice');
+      });
     });
 
     test('the app never sees an exception when the delegate throws mid-show', () async {

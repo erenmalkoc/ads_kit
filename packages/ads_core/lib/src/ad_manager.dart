@@ -49,6 +49,9 @@ final class AdManager {
   static final _healthEvents = StreamController<AdHealthEvent>.broadcast();
   static final _managed = _ManagedAdProvider();
 
+  static Timer? _recoveryTimer;
+  static int _recoveryAttempts = 0;
+
   /// The provider the app talks to. Stable across `boot`/`switchProvider`
   /// calls and automatic health-triggered fallbacks — it's always this same
   /// object, forwarding to whichever real provider is currently active.
@@ -130,7 +133,10 @@ final class AdManager {
   /// this after the user completes a consent flow, instead of re-booting.
   /// If the active provider cannot serve the new consent state at all
   /// (e.g. MAX for a now-child-directed user), it is switched away from,
-  /// falling back exactly like a failed init.
+  /// falling back exactly like a failed init. That consent-driven fallback
+  /// is *not* auto-recovered — only a new consent state can change the
+  /// situation, so call [switchProvider] once consent allows the primary
+  /// again.
   static Future<void> updateConsent(AdConsent consent) async {
     _consent = consent;
     try {
@@ -150,6 +156,9 @@ final class AdManager {
   /// tests — production code boots once per process.
   @visibleForTesting
   static Future<void> resetForTesting() async {
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+    _recoveryAttempts = 0;
     await _safeDispose(_active);
     _factories
       ..clear()
@@ -251,10 +260,29 @@ final class AdManager {
 
     provider ??= previous;
 
+    _bindActive(provider, resolvedKey);
+
+    final shouldEmit = resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
+    if (shouldEmit) {
+      _healthEvents.add(AdProviderSwitched(
+        fromProvider: previousKey,
+        toProvider: resolvedKey,
+        reason: resolvedReason,
+      ));
+    }
+
+    if (!identical(previous, provider)) {
+      unawaited(_safeDispose(previous));
+    }
+
+    _maybeScheduleRecovery(resolvedReason);
+  }
+
+  static void _bindActive(AdProvider provider, String key) {
     _active = provider;
-    _activeKey = resolvedKey;
-    _healthMonitor.reset(resolvedKey);
-    _managed._bindTo(provider, resolvedKey);
+    _activeKey = key;
+    _healthMonitor.reset(key);
+    _managed._bindTo(provider, key);
 
     // Kick off loading for every enabled fullscreen format so the first
     // show attempt isn't a guaranteed not_ready. Banner is excluded — its
@@ -271,16 +299,54 @@ final class AdManager {
           break;
       }
     }
+  }
 
-    final shouldEmit = resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
-    if (shouldEmit) {
-      _healthEvents.add(AdProviderSwitched(
-        fromProvider: previousKey,
-        toProvider: resolvedKey,
-        reason: resolvedReason,
-      ));
+  /// After any provider change, decides whether a timer should try the
+  /// configured `active_provider` again. Runs on every [_activate] so a
+  /// successful (re)activation of the configured provider also cancels
+  /// pending attempts and resets the per-episode attempt budget.
+  static void _maybeScheduleRecovery(ProviderSwitchReason reason) {
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+
+    if (_activeKey == _config.activeProvider) {
+      _recoveryAttempts = 0;
+      return;
+    }
+    // A manual switch is an explicit choice — don't fight it. A consent
+    // rejection won't heal with time — only a new consent state can.
+    if (reason == ProviderSwitchReason.manual ||
+        reason == ProviderSwitchReason.consentRejected) {
+      return;
+    }
+    if (_config.recoveryCooldown <= Duration.zero) return;
+    if (_recoveryAttempts >= _config.recoveryMaxAttempts) return;
+    if (!_factories.containsKey(_config.activeProvider)) return;
+
+    _recoveryTimer = Timer(_config.recoveryCooldown, _attemptRecovery);
+  }
+
+  /// Tries the configured provider without touching the current one first
+  /// — the working fallback keeps serving unless the recovery init
+  /// actually succeeds, so a still-broken primary costs nothing but the
+  /// attempt itself.
+  static Future<void> _attemptRecovery() async {
+    _recoveryAttempts++;
+    final provider = await _tryCreateAndInit(_config.activeProvider);
+    if (provider == null) {
+      _maybeScheduleRecovery(ProviderSwitchReason.initFailed);
+      return;
     }
 
+    final previous = _active;
+    final previousKey = _activeKey;
+    _bindActive(provider, _config.activeProvider);
+    _recoveryAttempts = 0;
+    _healthEvents.add(AdProviderSwitched(
+      fromProvider: previousKey,
+      toProvider: _activeKey,
+      reason: ProviderSwitchReason.recovered,
+    ));
     if (!identical(previous, provider)) {
       unawaited(_safeDispose(previous));
     }

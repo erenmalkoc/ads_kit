@@ -14,6 +14,8 @@ final class AdRuntimeConfig {
     required this.disabledCountries,
     required this.healthFailureThreshold,
     required this.providerExtras,
+    required this.recoveryCooldown,
+    required this.recoveryMaxAttempts,
   });
 
   /// No remote config reachable, or it's unparseable: show nothing.
@@ -28,6 +30,8 @@ final class AdRuntimeConfig {
     disabledCountries: {},
     healthFailureThreshold: 3,
     providerExtras: {},
+    recoveryCooldown: Duration(minutes: 5),
+    recoveryMaxAttempts: 3,
   );
 
   final String activeProvider;
@@ -47,6 +51,14 @@ final class AdRuntimeConfig {
   /// ids can change without a store release. Supports `_android`/`_ios`
   /// key suffixes for per-platform values — see [resolveProviderExtras].
   final Map<String, Map<String, String>> providerExtras;
+
+  /// How long after an automatic fallback [AdManager] waits before trying
+  /// the configured `active_provider` again. Zero disables recovery.
+  final Duration recoveryCooldown;
+
+  /// How many recovery attempts to make per fallback episode before
+  /// giving up until the next boot/manual switch.
+  final int recoveryMaxAttempts;
 
   /// Parses a raw JSON map field-by-field: a missing or wrong-typed key
   /// falls back to [safeDefaults]'s value for just that field, rather than
@@ -76,6 +88,10 @@ final class AdRuntimeConfig {
           safeDefaults.healthFailureThreshold,
       providerExtras: _readProviderExtras(raw['providers']) ??
           safeDefaults.providerExtras,
+      recoveryCooldown: _readSeconds(raw['recovery_cooldown_sec']) ??
+          safeDefaults.recoveryCooldown,
+      recoveryMaxAttempts: _readInt(raw, 'recovery_max_attempts') ??
+          safeDefaults.recoveryMaxAttempts,
     );
   }
 

@@ -128,6 +128,21 @@ void main() {
       expect(config.providerExtras, isEmpty);
     });
 
+    test('parses recovery fields with safe defaults', () {
+      final config = AdRuntimeConfig.fromJson(const {
+        'recovery_cooldown_sec': 120,
+        'recovery_max_attempts': 5,
+      });
+      expect(config.recoveryCooldown, const Duration(seconds: 120));
+      expect(config.recoveryMaxAttempts, 5);
+
+      final defaulted = AdRuntimeConfig.fromJson(const {'active_provider': 'x'});
+      expect(defaulted.recoveryCooldown,
+          AdRuntimeConfig.safeDefaults.recoveryCooldown);
+      expect(defaulted.recoveryMaxAttempts,
+          AdRuntimeConfig.safeDefaults.recoveryMaxAttempts);
+    });
+
     test('double values for integer/duration fields are coerced, not dropped', () {
       final config = AdRuntimeConfig.fromJson(const {
         'interstitial_max_per_session': 3.0,

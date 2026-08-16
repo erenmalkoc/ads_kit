@@ -10,6 +10,10 @@ enum ProviderSwitchReason {
   /// serve (e.g. MAX with a now-child-directed user).
   consentRejected,
 
+  /// A recovery attempt after a fallback succeeded — the configured
+  /// `active_provider` is serving again.
+  recovered,
+
   /// The app (or a caller) explicitly requested `AdManager.switchProvider`.
   manual,
 }
