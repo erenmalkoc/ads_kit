@@ -16,8 +16,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  ads_core:
-    path: ../ads_core
+  ads_core: ^0.1.0
   unity_levelplay_mediation: ^9.2.0
 
 dev_dependencies:
