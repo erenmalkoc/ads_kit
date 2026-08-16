@@ -27,6 +27,7 @@ suffixes so one shared config serves both platforms:
 | `interstitial_ad_unit_id` | only if using interstitials | per-platform suffixes apply |
 | `rewarded_ad_unit_id` | only if using rewarded ads | per-platform suffixes apply |
 | `banner_ad_unit_id` | only if using banners | per-platform suffixes apply |
+| `user_id` | only for S2S reward callbacks | set as both init userId and dynamic user id, so the callback's USER_ID macro carries it |
 
 A format with no ad unit id configured is simply never loaded —
 `preload`/`isReady`/`show*` behave as "not configured" (a failed

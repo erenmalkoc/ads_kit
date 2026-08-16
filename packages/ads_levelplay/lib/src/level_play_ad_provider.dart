@@ -55,9 +55,19 @@ final class LevelPlayAdProvider implements AdProvider {
     // ATT is requested by the app itself, never by this layer — LevelPlay
     // picks up IDFA availability from the OS once the app has asked.
 
+    var initBuilder = lp.LevelPlayInitRequest.builder(appKey);
+    final userId = config.extras['user_id'];
+    if (userId != null && userId.isNotEmpty) {
+      initBuilder = initBuilder.withUserId(userId);
+      // Rewarded server-to-server callbacks report the *dynamic* user id in
+      // their USER_ID macro — set both so S2S crediting reaches the right
+      // account regardless of which one LevelPlay reads.
+      await lp.LevelPlay.setDynamicUserId(userId);
+    }
+
     final initCompleter = Completer<void>();
     await lp.LevelPlay.init(
-      initRequest: lp.LevelPlayInitRequest.builder(appKey).build(),
+      initRequest: initBuilder.build(),
       initListener: LevelPlayInitListenerAdapter(initCompleter),
     );
     await initCompleter.future;
