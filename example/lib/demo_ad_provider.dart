@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:ads_core/ads_core.dart';
+import 'package:ads_kit/ads_kit.dart';
 import 'package:flutter/material.dart';
 
 /// A fully self-contained fake provider, used only by this example app to
 /// demonstrate `AdManager.switchProvider` without wiring a real mediation
 /// SDK. Simulates network latency and occasional no-fill so the demo UI has
-/// something realistic to react to. `ads_levelplay` and `ads_max` are real
+/// something realistic to react to. `ads_kit_levelplay` and `ads_kit_max` are real
 /// wrappers over their SDKs — this is not a template for those.
 final class DemoAdProvider implements AdProvider {
   DemoAdProvider(

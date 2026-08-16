@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:ads_core/ads_core.dart';
+import 'package:ads_kit/ads_kit.dart';
 import 'package:flutter/material.dart';
 
 import 'demo_ad_provider.dart';

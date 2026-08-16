@@ -1,4 +1,4 @@
-import 'package:ads_core/ads_core.dart';
+import 'package:ads_kit/ads_kit.dart';
 import 'package:ads_kit_example/demo_ad_provider.dart';
 import 'package:ads_kit_example/main.dart';
 import 'package:ads_kit_example/static_ad_config_source.dart';

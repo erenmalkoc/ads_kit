@@ -1,4 +1,4 @@
-import 'package:ads_core/ads_core.dart';
+import 'package:ads_kit/ads_kit.dart';
 
 /// An [AdConfigSource] that returns a fixed map instead of calling Firebase
 /// — this example has no Firebase project wired up, and doesn't need one to

@@ -1,13 +1,15 @@
-name: ads_kit
+# Workspace root only — the published package named ads_kit lives in
+# packages/ads_kit; pub requires unique names inside one workspace.
+name: ads_kit_workspace
 publish_to: none
 
 environment:
   sdk: ^3.11.0
 
 workspace:
-  - packages/ads_core
-  - packages/ads_levelplay
-  - packages/ads_max
+  - packages/ads_kit
+  - packages/ads_kit_levelplay
+  - packages/ads_kit_max
   - example
 
 dev_dependencies:
