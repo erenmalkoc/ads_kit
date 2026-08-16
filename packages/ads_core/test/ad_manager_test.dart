@@ -166,6 +166,29 @@ void main() {
     });
   });
 
+  group('AdManager.startNewSession', () {
+    test('resets the interstitial session cap', () async {
+      AdManager.register('fake', () => FakeAdProvider('fake'));
+      await AdManager.boot(
+        configSource: FakeAdConfigSource({
+          'active_provider': 'fake',
+          'fallback_provider': 'noop',
+          'cold_start_grace_sec': 0,
+          'interstitial_min_interval_sec': 0,
+          'interstitial_max_per_session': 1,
+        }),
+      );
+
+      expect((await AdManager.I.showInterstitial()).shown, isTrue);
+      expect((await AdManager.I.showInterstitial()).suppressed, isTrue,
+          reason: 'session cap of 1 is spent');
+
+      AdManager.startNewSession();
+
+      expect((await AdManager.I.showInterstitial()).shown, isTrue);
+    });
+  });
+
   group('AdManager auto-preload', () {
     test('boot preloads enabled fullscreen formats, not banner', () async {
       final fake = FakeAdProvider('fake');

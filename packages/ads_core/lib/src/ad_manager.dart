@@ -118,6 +118,14 @@ final class AdManager {
     );
   }
 
+  /// Marks the start of a fresh user session for frequency capping —
+  /// resets the interstitial per-session counter and min-interval clock.
+  /// [FrequencyGuard] can't know what the app considers a session (e.g.
+  /// resuming from background after 30+ minutes), so the app calls this
+  /// from its own lifecycle handling; a cold start needs no call since
+  /// [boot] builds a fresh guard anyway.
+  static void startNewSession() => _frequencyGuard.resetSession();
+
   /// Explicitly switches the active provider at runtime — no store update
   /// needed, since this can be driven by the same remote config that
   /// changed `active_provider`, or called directly for a manual override.
