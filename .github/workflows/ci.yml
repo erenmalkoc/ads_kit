@@ -24,11 +24,15 @@ jobs:
       - name: Get dependencies (pub workspace)
         run: flutter pub get
 
+      - name: Activate melos
+        # The melos scripts shell out to `melos exec`, so the CLI has to be on PATH.
+        run: dart pub global activate melos
+
       - name: Check formatting
-        run: dart run melos run format
+        run: melos run format
 
       - name: Analyze
-        run: dart run melos run analyze
+        run: melos run analyze
 
       - name: Test
-        run: dart run melos run test
+        run: melos run test
