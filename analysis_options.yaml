@@ -11,3 +11,11 @@ analyzer:
   language:
     strict-casts: true
     strict-inference: true
+  # Flutter 3.47+ `pub get` adds these to every package's analysis_options
+  # and leaves the tree dirty in CI; keeping them here (every package includes
+  # this file) satisfies the migration up front.
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
