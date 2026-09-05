@@ -66,7 +66,11 @@ void main() {
     });
 
     test('blocks once session cap is reached', () {
-      guard = buildGuard(coldStartGrace: Duration.zero, minInterval: Duration.zero, maxPerSession: 2);
+      guard = buildGuard(
+        coldStartGrace: Duration.zero,
+        minInterval: Duration.zero,
+        maxPerSession: 2,
+      );
 
       expect(guard.evaluate().allowed, isTrue);
       guard.recordShown();
@@ -78,16 +82,23 @@ void main() {
       expect(decision.reason, FrequencyBlockReason.sessionCap);
     });
 
-    test('resetSession clears both the interval clock and the session count', () {
-      guard = buildGuard(coldStartGrace: Duration.zero, minInterval: const Duration(seconds: 60), maxPerSession: 1);
+    test(
+      'resetSession clears both the interval clock and the session count',
+      () {
+        guard = buildGuard(
+          coldStartGrace: Duration.zero,
+          minInterval: const Duration(seconds: 60),
+          maxPerSession: 1,
+        );
 
-      expect(guard.evaluate().allowed, isTrue);
-      guard.recordShown();
-      expect(guard.evaluate().allowed, isFalse);
+        expect(guard.evaluate().allowed, isTrue);
+        guard.recordShown();
+        expect(guard.evaluate().allowed, isFalse);
 
-      guard.resetSession();
-      expect(guard.evaluate().allowed, isTrue);
-    });
+        guard.resetSession();
+        expect(guard.evaluate().allowed, isTrue);
+      },
+    );
 
     test('blocks a disabled country regardless of other checks', () {
       guard = buildGuard(
@@ -111,15 +122,18 @@ void main() {
       expect(guard.evaluate(countryCode: 'US').allowed, isTrue);
     });
 
-    test('allows when countryCode is null even with a non-empty disabled list', () {
-      guard = buildGuard(
-        coldStartGrace: Duration.zero,
-        minInterval: Duration.zero,
-        disabledCountries: {'TR'},
-      );
+    test(
+      'allows when countryCode is null even with a non-empty disabled list',
+      () {
+        guard = buildGuard(
+          coldStartGrace: Duration.zero,
+          minInterval: Duration.zero,
+          disabledCountries: {'TR'},
+        );
 
-      expect(guard.evaluate().allowed, isTrue);
-    });
+        expect(guard.evaluate().allowed, isTrue);
+      },
+    );
 
     test('evaluate never throws for any state', () {
       expect(() => guard.evaluate(countryCode: ''), returnsNormally);

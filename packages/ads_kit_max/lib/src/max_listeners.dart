@@ -10,17 +10,17 @@ import 'package:applovin_max/applovin_max.dart' as max;
 import 'max_mappers.dart';
 
 AdError _mapError(max.MaxError error, String providerName) => maxErrorToAdError(
-      errorCodeName: error.code.name,
-      message: error.message,
-      providerName: providerName,
-    );
+  errorCodeName: error.code.name,
+  message: error.message,
+  providerName: providerName,
+);
 
 AdRevenue _mapRevenue(max.MaxAd ad) => maxAdToAdRevenue(
-      revenue: ad.revenue,
-      networkName: ad.networkName,
-      adUnitId: ad.adUnitId,
-      revenuePrecision: ad.revenuePrecision,
-    );
+  revenue: ad.revenue,
+  networkName: ad.networkName,
+  adUnitId: ad.adUnitId,
+  revenuePrecision: ad.revenuePrecision,
+);
 
 max.InterstitialListener buildInterstitialListener({
   required String providerName,
@@ -29,53 +29,67 @@ max.InterstitialListener buildInterstitialListener({
   required void Function(AdShowResult result) onShowCompleted,
 }) {
   return max.InterstitialListener(
-    onAdLoadedCallback: (ad) => emit(AdEventLoaded(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdLoadFailedCallback: (adUnitId, error) => emit(AdEventFailed(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      error: _mapError(error, providerName),
-    )),
-    onAdDisplayedCallback: (ad) {
-      onDisplayStarted();
-      emit(AdEventShown(
+    onAdLoadedCallback: (ad) => emit(
+      AdEventLoaded(
         format: AdFormat.interstitial,
         providerName: providerName,
         placement: ad.placement,
-      ));
+      ),
+    ),
+    onAdLoadFailedCallback: (adUnitId, error) => emit(
+      AdEventFailed(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        error: _mapError(error, providerName),
+      ),
+    ),
+    onAdDisplayedCallback: (ad) {
+      onDisplayStarted();
+      emit(
+        AdEventShown(
+          format: AdFormat.interstitial,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
     },
     onAdDisplayFailedCallback: (ad, error) {
       final adError = _mapError(error, providerName);
-      emit(AdEventFailed(
-        format: AdFormat.interstitial,
-        providerName: providerName,
-        placement: ad.placement,
-        error: adError,
-      ));
+      emit(
+        AdEventFailed(
+          format: AdFormat.interstitial,
+          providerName: providerName,
+          placement: ad.placement,
+          error: adError,
+        ),
+      );
       onShowCompleted(AdShowResult.failed(adError));
     },
-    onAdClickedCallback: (ad) => emit(AdEventClicked(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdHiddenCallback: (ad) {
-      emit(AdEventDismissed(
+    onAdClickedCallback: (ad) => emit(
+      AdEventClicked(
         format: AdFormat.interstitial,
         providerName: providerName,
         placement: ad.placement,
-      ));
+      ),
+    ),
+    onAdHiddenCallback: (ad) {
+      emit(
+        AdEventDismissed(
+          format: AdFormat.interstitial,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
       onShowCompleted(AdShowResult.shown());
     },
-    onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: ad.placement,
-      revenue: _mapRevenue(ad),
-    )),
+    onAdRevenuePaidCallback: (ad) => emit(
+      AdEventRevenuePaid(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        placement: ad.placement,
+        revenue: _mapRevenue(ad),
+      ),
+    ),
   );
 }
 
@@ -88,63 +102,79 @@ max.RewardedAdListener buildRewardedListener({
   var rewardEarnedThisShow = false;
 
   return max.RewardedAdListener(
-    onAdLoadedCallback: (ad) => emit(AdEventLoaded(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdLoadFailedCallback: (adUnitId, error) => emit(AdEventFailed(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      error: _mapError(error, providerName),
-    )),
+    onAdLoadedCallback: (ad) => emit(
+      AdEventLoaded(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        placement: ad.placement,
+      ),
+    ),
+    onAdLoadFailedCallback: (adUnitId, error) => emit(
+      AdEventFailed(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        error: _mapError(error, providerName),
+      ),
+    ),
     onAdDisplayedCallback: (ad) {
       rewardEarnedThisShow = false;
       onDisplayStarted();
-      emit(AdEventShown(
-        format: AdFormat.rewarded,
-        providerName: providerName,
-        placement: ad.placement,
-      ));
+      emit(
+        AdEventShown(
+          format: AdFormat.rewarded,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
     },
     onAdDisplayFailedCallback: (ad, error) {
       final adError = _mapError(error, providerName);
-      emit(AdEventFailed(
-        format: AdFormat.rewarded,
-        providerName: providerName,
-        placement: ad.placement,
-        error: adError,
-      ));
+      emit(
+        AdEventFailed(
+          format: AdFormat.rewarded,
+          providerName: providerName,
+          placement: ad.placement,
+          error: adError,
+        ),
+      );
       onShowCompleted(AdShowResult.failed(adError));
     },
-    onAdClickedCallback: (ad) => emit(AdEventClicked(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdHiddenCallback: (ad) {
-      emit(AdEventDismissed(
+    onAdClickedCallback: (ad) => emit(
+      AdEventClicked(
         format: AdFormat.rewarded,
         providerName: providerName,
         placement: ad.placement,
-      ));
+      ),
+    ),
+    onAdHiddenCallback: (ad) {
+      emit(
+        AdEventDismissed(
+          format: AdFormat.rewarded,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
       onShowCompleted(AdShowResult.shown(rewardEarned: rewardEarnedThisShow));
     },
-    onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      placement: ad.placement,
-      revenue: _mapRevenue(ad),
-    )),
-    onAdReceivedRewardCallback: (ad, reward) {
-      rewardEarnedThisShow = true;
-      emit(maxRewardToAdEvent(
+    onAdRevenuePaidCallback: (ad) => emit(
+      AdEventRevenuePaid(
         format: AdFormat.rewarded,
         providerName: providerName,
-        rewardLabel: reward.label,
-        rewardAmount: reward.amount,
         placement: ad.placement,
-      ));
+        revenue: _mapRevenue(ad),
+      ),
+    ),
+    onAdReceivedRewardCallback: (ad, reward) {
+      rewardEarnedThisShow = true;
+      emit(
+        maxRewardToAdEvent(
+          format: AdFormat.rewarded,
+          providerName: providerName,
+          rewardLabel: reward.label,
+          rewardAmount: reward.amount,
+          placement: ad.placement,
+        ),
+      );
     },
   );
 }
@@ -156,53 +186,67 @@ max.AppOpenAdListener buildAppOpenListener({
   required void Function(AdShowResult result) onShowCompleted,
 }) {
   return max.AppOpenAdListener(
-    onAdLoadedCallback: (ad) => emit(AdEventLoaded(
-      format: AdFormat.appOpen,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdLoadFailedCallback: (adUnitId, error) => emit(AdEventFailed(
-      format: AdFormat.appOpen,
-      providerName: providerName,
-      error: _mapError(error, providerName),
-    )),
-    onAdDisplayedCallback: (ad) {
-      onDisplayStarted();
-      emit(AdEventShown(
+    onAdLoadedCallback: (ad) => emit(
+      AdEventLoaded(
         format: AdFormat.appOpen,
         providerName: providerName,
         placement: ad.placement,
-      ));
+      ),
+    ),
+    onAdLoadFailedCallback: (adUnitId, error) => emit(
+      AdEventFailed(
+        format: AdFormat.appOpen,
+        providerName: providerName,
+        error: _mapError(error, providerName),
+      ),
+    ),
+    onAdDisplayedCallback: (ad) {
+      onDisplayStarted();
+      emit(
+        AdEventShown(
+          format: AdFormat.appOpen,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
     },
     onAdDisplayFailedCallback: (ad, error) {
       final adError = _mapError(error, providerName);
-      emit(AdEventFailed(
-        format: AdFormat.appOpen,
-        providerName: providerName,
-        placement: ad.placement,
-        error: adError,
-      ));
+      emit(
+        AdEventFailed(
+          format: AdFormat.appOpen,
+          providerName: providerName,
+          placement: ad.placement,
+          error: adError,
+        ),
+      );
       onShowCompleted(AdShowResult.failed(adError));
     },
-    onAdClickedCallback: (ad) => emit(AdEventClicked(
-      format: AdFormat.appOpen,
-      providerName: providerName,
-      placement: ad.placement,
-    )),
-    onAdHiddenCallback: (ad) {
-      emit(AdEventDismissed(
+    onAdClickedCallback: (ad) => emit(
+      AdEventClicked(
         format: AdFormat.appOpen,
         providerName: providerName,
         placement: ad.placement,
-      ));
+      ),
+    ),
+    onAdHiddenCallback: (ad) {
+      emit(
+        AdEventDismissed(
+          format: AdFormat.appOpen,
+          providerName: providerName,
+          placement: ad.placement,
+        ),
+      );
       onShowCompleted(AdShowResult.shown());
     },
-    onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
-      format: AdFormat.appOpen,
-      providerName: providerName,
-      placement: ad.placement,
-      revenue: _mapRevenue(ad),
-    )),
+    onAdRevenuePaidCallback: (ad) => emit(
+      AdEventRevenuePaid(
+        format: AdFormat.appOpen,
+        providerName: providerName,
+        placement: ad.placement,
+        revenue: _mapRevenue(ad),
+      ),
+    ),
   );
 }
 
@@ -219,29 +263,37 @@ max.AdViewAdListener buildAdViewListener({
   String? placement,
 }) {
   return max.AdViewAdListener(
-    onAdLoadedCallback: (ad) => emit(AdEventLoaded(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-    )),
-    onAdLoadFailedCallback: (adUnitId, error) => emit(AdEventFailed(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-      error: _mapError(error, providerName),
-    )),
-    onAdClickedCallback: (ad) => emit(AdEventClicked(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-    )),
+    onAdLoadedCallback: (ad) => emit(
+      AdEventLoaded(
+        format: format,
+        providerName: providerName,
+        placement: placement,
+      ),
+    ),
+    onAdLoadFailedCallback: (adUnitId, error) => emit(
+      AdEventFailed(
+        format: format,
+        providerName: providerName,
+        placement: placement,
+        error: _mapError(error, providerName),
+      ),
+    ),
+    onAdClickedCallback: (ad) => emit(
+      AdEventClicked(
+        format: format,
+        providerName: providerName,
+        placement: placement,
+      ),
+    ),
     onAdExpandedCallback: (ad) {},
     onAdCollapsedCallback: (ad) {},
-    onAdRevenuePaidCallback: (ad) => emit(AdEventRevenuePaid(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-      revenue: _mapRevenue(ad),
-    )),
+    onAdRevenuePaidCallback: (ad) => emit(
+      AdEventRevenuePaid(
+        format: format,
+        providerName: providerName,
+        placement: placement,
+        revenue: _mapRevenue(ad),
+      ),
+    ),
   );
 }

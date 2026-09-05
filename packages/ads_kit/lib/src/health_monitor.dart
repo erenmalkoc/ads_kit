@@ -7,7 +7,7 @@
 /// wiring.
 final class HealthMonitor {
   HealthMonitor({required this.failureThreshold})
-      : assert(failureThreshold > 0, 'failureThreshold must be positive');
+    : assert(failureThreshold > 0, 'failureThreshold must be positive');
 
   final int failureThreshold;
 

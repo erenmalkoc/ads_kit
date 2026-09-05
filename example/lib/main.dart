@@ -15,7 +15,10 @@ const _providers = <String, Color>{
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  AdManager.register('demo_a', () => DemoAdProvider('demo_a', color: Colors.indigo));
+  AdManager.register(
+    'demo_a',
+    () => DemoAdProvider('demo_a', color: Colors.indigo),
+  );
   AdManager.register(
     'demo_b',
     () => DemoAdProvider('demo_b', color: Colors.teal, failureRate: 0.35),
@@ -36,7 +39,10 @@ Future<void> main() async {
       'disabled_countries': <String>[],
       'health_failure_threshold': 3,
     }),
-    consent: const AdConsent(gdprConsent: true, attStatus: AttStatus.authorized),
+    consent: const AdConsent(
+      gdprConsent: true,
+      attStatus: AttStatus.authorized,
+    ),
   );
 
   runApp(const AdsKitExampleApp());
@@ -94,7 +100,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _refreshReadiness() async {
-    for (final format in [AdFormat.interstitial, AdFormat.rewarded, AdFormat.appOpen]) {
+    for (final format in [
+      AdFormat.interstitial,
+      AdFormat.rewarded,
+      AdFormat.appOpen,
+    ]) {
       final ready = await AdManager.I.isReady(format);
       if (!mounted) return;
       setState(() => _readiness[format] = ready);
@@ -112,24 +122,36 @@ class _HomePageState extends State<HomePage> {
   void _onAdEvent(AdEvent event) {
     final (text, color) = switch (event) {
       AdEventLoaded() => ('loaded: ${event.format.name}', Colors.green),
-      AdEventFailed() => ('failed: ${event.format.name} (${event.error.code})', Colors.red),
+      AdEventFailed() => (
+        'failed: ${event.format.name} (${event.error.code})',
+        Colors.red,
+      ),
       AdEventShown() => ('shown: ${event.format.name}', Colors.blue),
       AdEventClicked() => ('clicked: ${event.format.name}', Colors.purple),
-      AdEventDismissed() => ('dismissed: ${event.format.name}', Colors.blueGrey),
-      AdEventRewardEarned() =>
-        ('reward earned: ${event.rewardAmount} ${event.rewardType}', Colors.amber.shade800),
+      AdEventDismissed() => (
+        'dismissed: ${event.format.name}',
+        Colors.blueGrey,
+      ),
+      AdEventRewardEarned() => (
+        'reward earned: ${event.rewardAmount} ${event.rewardType}',
+        Colors.amber.shade800,
+      ),
       AdEventRevenuePaid() => (
-          'revenue: \$${event.revenue.value.toStringAsFixed(4)} '
-              '(${event.revenue.networkName}, ${event.revenue.precision.name})',
-          Colors.teal,
-        ),
+        'revenue: \$${event.revenue.value.toStringAsFixed(4)} '
+            '(${event.revenue.networkName}, ${event.revenue.precision.name})',
+        Colors.teal,
+      ),
     };
     _pushLog('[${event.providerName}] $text', color);
     unawaited(_refreshReadiness());
   }
 
   void _onHealthEvent(AdHealthEvent event) {
-    if (event case AdProviderSwitched(:final fromProvider, :final toProvider, :final reason)) {
+    if (event case AdProviderSwitched(
+      :final fromProvider,
+      :final toProvider,
+      :final reason,
+    )) {
       _pushLog(
         'provider switch: $fromProvider -> $toProvider (${reason.name})',
         Colors.deepOrange,
@@ -157,9 +179,15 @@ class _HomePageState extends State<HomePage> {
     };
 
     if (result.suppressed) {
-      _pushLog('${format.name}: suppressed by policy (frequency/consent)', Colors.orange);
+      _pushLog(
+        '${format.name}: suppressed by policy (frequency/consent)',
+        Colors.orange,
+      );
     } else if (result.error != null) {
-      _pushLog('${format.name}: show failed (${result.error!.code})', Colors.red);
+      _pushLog(
+        '${format.name}: show failed (${result.error!.code})',
+        Colors.red,
+      );
     }
   }
 
@@ -179,27 +207,40 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Active provider: $_activeProvider',
-                            style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          'Active provider: $_activeProvider',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 8),
                         SegmentedButton<String>(
                           segments: _providers.keys
-                              .map((key) => ButtonSegment(value: key, label: Text(key)))
+                              .map(
+                                (key) =>
+                                    ButtonSegment(value: key, label: Text(key)),
+                              )
                               .toList(),
                           selected: {_activeProvider},
-                          onSelectionChanged: (selection) => _switchTo(selection.first),
+                          onSelectionChanged: (selection) =>
+                              _switchTo(selection.first),
                         ),
                       ],
                     ),
                   ),
                   const Divider(height: 1),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final format in [AdFormat.interstitial, AdFormat.rewarded, AdFormat.appOpen])
+                        for (final format in [
+                          AdFormat.interstitial,
+                          AdFormat.rewarded,
+                          AdFormat.appOpen,
+                        ])
                           _FormatCard(
                             format: format,
                             ready: _readiness[format] ?? false,
@@ -207,14 +248,20 @@ class _HomePageState extends State<HomePage> {
                             onShow: () => _show(format),
                           ),
                         FilledButton.tonal(
-                          onPressed: () => setState(() => _showBanner = !_showBanner),
-                          child: Text(_showBanner ? 'Hide banner' : 'Show banner'),
+                          onPressed: () =>
+                              setState(() => _showBanner = !_showBanner),
+                          child: Text(
+                            _showBanner ? 'Hide banner' : 'Show banner',
+                          ),
                         ),
                       ],
                     ),
                   ),
                   if (_showBanner)
-                    AdManager.I.banner(size: AdBannerSize.banner, placement: 'example_banner'),
+                    AdManager.I.banner(
+                      size: AdBannerSize.banner,
+                      placement: 'example_banner',
+                    ),
                 ],
               ),
             ),
@@ -224,7 +271,10 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('Event stream', style: Theme.of(context).textTheme.titleSmall),
+              child: Text(
+                'Event stream',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
             ),
           ),
           Expanded(
@@ -276,7 +326,10 @@ class _FormatCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(format.name, style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  format.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const SizedBox(width: 6),
                 Icon(
                   ready ? Icons.check_circle : Icons.circle_outlined,
@@ -289,7 +342,10 @@ class _FormatCard extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                OutlinedButton(onPressed: onPreload, child: const Text('Preload')),
+                OutlinedButton(
+                  onPressed: onPreload,
+                  child: const Text('Preload'),
+                ),
                 const SizedBox(width: 6),
                 FilledButton(onPressed: onShow, child: const Text('Show')),
               ],

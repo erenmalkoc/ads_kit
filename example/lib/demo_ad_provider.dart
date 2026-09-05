@@ -15,8 +15,8 @@ final class DemoAdProvider implements AdProvider {
     this.color = Colors.indigo,
     double failureRate = 0.15,
     Duration loadDelay = const Duration(milliseconds: 500),
-  })  : _failureRate = failureRate,
-        _loadDelay = loadDelay;
+  }) : _failureRate = failureRate,
+       _loadDelay = loadDelay;
 
   @override
   final String name;
@@ -50,15 +50,17 @@ final class DemoAdProvider implements AdProvider {
     final noFill = _random.nextDouble() < _failureRate;
     _readyState[format] = !noFill;
     if (noFill) {
-      _events.add(AdEventFailed(
-        format: format,
-        providerName: name,
-        error: AdError(
-          code: 'no_fill',
-          message: 'Simulated no fill',
+      _events.add(
+        AdEventFailed(
+          format: format,
           providerName: name,
+          error: AdError(
+            code: 'no_fill',
+            message: 'Simulated no fill',
+            providerName: name,
+          ),
         ),
-      ));
+      );
     } else {
       _events.add(AdEventLoaded(format: format, providerName: name));
     }
@@ -72,46 +74,66 @@ final class DemoAdProvider implements AdProvider {
       await preload(format);
     }
     if (_readyState[format] != true) {
-      return AdShowResult.failed(AdError(
-        code: 'not_ready',
-        message: 'No ad loaded for ${format.name}',
-        providerName: name,
-      ));
+      return AdShowResult.failed(
+        AdError(
+          code: 'not_ready',
+          message: 'No ad loaded for ${format.name}',
+          providerName: name,
+        ),
+      );
     }
 
     _readyState[format] = false;
-    _events.add(AdEventShown(format: format, providerName: name, placement: placement));
+    _events.add(
+      AdEventShown(format: format, providerName: name, placement: placement),
+    );
 
     if (_random.nextDouble() < 0.3) {
-      _events.add(AdEventClicked(format: format, providerName: name, placement: placement));
+      _events.add(
+        AdEventClicked(
+          format: format,
+          providerName: name,
+          placement: placement,
+        ),
+      );
     }
 
-    _events.add(AdEventRevenuePaid(
-      format: format,
-      providerName: name,
-      placement: placement,
-      revenue: AdRevenue(
-        value: 0.001 + _random.nextDouble() * 0.05,
-        currencyCode: 'USD',
-        networkName: '${name}_network',
-        adUnitId: '${name}_${format.name}',
-        precision: AdRevenuePrecision.estimated,
+    _events.add(
+      AdEventRevenuePaid(
+        format: format,
+        providerName: name,
+        placement: placement,
+        revenue: AdRevenue(
+          value: 0.001 + _random.nextDouble() * 0.05,
+          currencyCode: 'USD',
+          networkName: '${name}_network',
+          adUnitId: '${name}_${format.name}',
+          precision: AdRevenuePrecision.estimated,
+        ),
       ),
-    ));
+    );
 
     var rewardEarned = false;
     if (format == AdFormat.rewarded) {
       rewardEarned = true;
-      _events.add(AdEventRewardEarned(
+      _events.add(
+        AdEventRewardEarned(
+          format: format,
+          providerName: name,
+          placement: placement,
+          rewardType: 'coins',
+          rewardAmount: 10,
+        ),
+      );
+    }
+
+    _events.add(
+      AdEventDismissed(
         format: format,
         providerName: name,
         placement: placement,
-        rewardType: 'coins',
-        rewardAmount: 10,
-      ));
-    }
-
-    _events.add(AdEventDismissed(format: format, providerName: name, placement: placement));
+      ),
+    );
     unawaited(preload(format));
 
     return AdShowResult.shown(rewardEarned: rewardEarned);
@@ -131,17 +153,17 @@ final class DemoAdProvider implements AdProvider {
 
   @override
   Widget banner({required AdBannerSize size, String? placement}) => Container(
-        height: switch (size) {
-          AdBannerSize.banner => 50.0,
-          AdBannerSize.largeBanner => 100.0,
-          AdBannerSize.mediumRectangle => 250.0,
-          AdBannerSize.adaptive => 60.0,
-        },
-        width: double.infinity,
-        color: color.withValues(alpha: 0.2),
-        alignment: Alignment.center,
-        child: Text('$name banner (${size.name})', style: TextStyle(color: color)),
-      );
+    height: switch (size) {
+      AdBannerSize.banner => 50.0,
+      AdBannerSize.largeBanner => 100.0,
+      AdBannerSize.mediumRectangle => 250.0,
+      AdBannerSize.adaptive => 60.0,
+    },
+    width: double.infinity,
+    color: color.withValues(alpha: 0.2),
+    alignment: Alignment.center,
+    child: Text('$name banner (${size.name})', style: TextStyle(color: color)),
+  );
 
   @override
   Stream<AdEvent> get events => _events.stream;

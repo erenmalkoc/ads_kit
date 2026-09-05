@@ -29,7 +29,7 @@ final class FrequencyDecision {
   const FrequencyDecision.allow() : this._(true, null);
 
   const FrequencyDecision.block(FrequencyBlockReason reason)
-      : this._(false, reason);
+    : this._(false, reason);
 
   final bool allowed;
   final FrequencyBlockReason? reason;
@@ -46,9 +46,9 @@ final class FrequencyGuard {
   FrequencyGuard({
     required FrequencyGuardConfig config,
     DateTime Function() now = DateTime.now,
-  })  : _config = config,
-        _now = now,
-        _appStart = now();
+  }) : _config = config,
+       _now = now,
+       _appStart = now();
 
   final FrequencyGuardConfig _config;
   final DateTime Function() _now;

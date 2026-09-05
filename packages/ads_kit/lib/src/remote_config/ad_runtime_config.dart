@@ -70,27 +70,33 @@ final class AdRuntimeConfig {
     return AdRuntimeConfig(
       activeProvider:
           _readString(raw, 'active_provider') ?? safeDefaults.activeProvider,
-      fallbackProvider: _readString(raw, 'fallback_provider') ??
+      fallbackProvider:
+          _readString(raw, 'fallback_provider') ??
           safeDefaults.fallbackProvider,
       formatsEnabled:
           _readFormats(raw['formats_enabled']) ?? safeDefaults.formatsEnabled,
       interstitialMinInterval:
           _readSeconds(raw['interstitial_min_interval_sec']) ??
-              safeDefaults.interstitialMinInterval,
+          safeDefaults.interstitialMinInterval,
       interstitialMaxPerSession:
           _readInt(raw, 'interstitial_max_per_session') ??
-              safeDefaults.interstitialMaxPerSession,
-      coldStartGrace: _readSeconds(raw['cold_start_grace_sec']) ??
+          safeDefaults.interstitialMaxPerSession,
+      coldStartGrace:
+          _readSeconds(raw['cold_start_grace_sec']) ??
           safeDefaults.coldStartGrace,
-      disabledCountries: _readCountries(raw['disabled_countries']) ??
+      disabledCountries:
+          _readCountries(raw['disabled_countries']) ??
           safeDefaults.disabledCountries,
-      healthFailureThreshold: _readInt(raw, 'health_failure_threshold') ??
+      healthFailureThreshold:
+          _readInt(raw, 'health_failure_threshold') ??
           safeDefaults.healthFailureThreshold,
-      providerExtras: _readProviderExtras(raw['providers']) ??
-          safeDefaults.providerExtras,
-      recoveryCooldown: _readSeconds(raw['recovery_cooldown_sec']) ??
+      providerExtras:
+          _readProviderExtras(raw['providers']) ?? safeDefaults.providerExtras,
+      recoveryCooldown:
+          _readSeconds(raw['recovery_cooldown_sec']) ??
           safeDefaults.recoveryCooldown,
-      recoveryMaxAttempts: _readInt(raw, 'recovery_max_attempts') ??
+      recoveryMaxAttempts:
+          _readInt(raw, 'recovery_max_attempts') ??
           safeDefaults.recoveryMaxAttempts,
     );
   }

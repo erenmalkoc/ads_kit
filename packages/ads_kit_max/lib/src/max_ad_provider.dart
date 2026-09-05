@@ -57,7 +57,9 @@ final class MaxAdProvider implements AdProvider {
   Future<void> init(AdConfig config) async {
     final sdkKey = config.extras['sdk_key'];
     if (sdkKey == null || sdkKey.isEmpty) {
-      throw StateError('MaxAdProvider.init requires AdConfig.extras["sdk_key"]');
+      throw StateError(
+        'MaxAdProvider.init requires AdConfig.extras["sdk_key"]',
+      );
     }
 
     // Consent must be set before initialize() to take effect for the very
@@ -69,13 +71,17 @@ final class MaxAdProvider implements AdProvider {
     // ATT is requested by the app itself, never by this layer — MAX picks
     // up IDFA availability from the OS once the app has asked.
 
-    final configuration =
-        await max.AppLovinMAX.initialize(sdkKey).timeout(_initTimeout);
+    final configuration = await max.AppLovinMAX.initialize(
+      sdkKey,
+    ).timeout(_initTimeout);
     if (configuration == null) {
-      throw StateError('MaxAdProvider.init: AppLovinMAX.initialize returned null');
+      throw StateError(
+        'MaxAdProvider.init: AppLovinMAX.initialize returned null',
+      );
     }
 
-    _interstitialAdUnitId = config.formatsEnabled.contains(AdFormat.interstitial)
+    _interstitialAdUnitId =
+        config.formatsEnabled.contains(AdFormat.interstitial)
         ? config.extras['interstitial_ad_unit_id']
         : null;
     _rewardedAdUnitId = config.formatsEnabled.contains(AdFormat.rewarded)
@@ -92,28 +98,34 @@ final class MaxAdProvider implements AdProvider {
         : null;
 
     if (_interstitialAdUnitId != null) {
-      max.AppLovinMAX.setInterstitialListener(buildInterstitialListener(
-        providerName: name,
-        emit: _events.add,
-        onDisplayStarted: () => _interstitialDisplayed = true,
-        onShowCompleted: (result) => _resolve(_interstitialShow, result),
-      ));
+      max.AppLovinMAX.setInterstitialListener(
+        buildInterstitialListener(
+          providerName: name,
+          emit: _events.add,
+          onDisplayStarted: () => _interstitialDisplayed = true,
+          onShowCompleted: (result) => _resolve(_interstitialShow, result),
+        ),
+      );
     }
     if (_rewardedAdUnitId != null) {
-      max.AppLovinMAX.setRewardedAdListener(buildRewardedListener(
-        providerName: name,
-        emit: _events.add,
-        onDisplayStarted: () => _rewardedDisplayed = true,
-        onShowCompleted: (result) => _resolve(_rewardedShow, result),
-      ));
+      max.AppLovinMAX.setRewardedAdListener(
+        buildRewardedListener(
+          providerName: name,
+          emit: _events.add,
+          onDisplayStarted: () => _rewardedDisplayed = true,
+          onShowCompleted: (result) => _resolve(_rewardedShow, result),
+        ),
+      );
     }
     if (_appOpenAdUnitId != null) {
-      max.AppLovinMAX.setAppOpenAdListener(buildAppOpenListener(
-        providerName: name,
-        emit: _events.add,
-        onDisplayStarted: () => _appOpenDisplayed = true,
-        onShowCompleted: (result) => _resolve(_appOpenShow, result),
-      ));
+      max.AppLovinMAX.setAppOpenAdListener(
+        buildAppOpenListener(
+          providerName: name,
+          emit: _events.add,
+          onDisplayStarted: () => _appOpenDisplayed = true,
+          onShowCompleted: (result) => _resolve(_appOpenShow, result),
+        ),
+      );
     }
   }
 
@@ -174,13 +186,19 @@ final class MaxAdProvider implements AdProvider {
     switch (format) {
       case AdFormat.interstitial:
         final id = _interstitialAdUnitId;
-        return id == null ? false : await max.AppLovinMAX.isInterstitialReady(id) ?? false;
+        return id == null
+            ? false
+            : await max.AppLovinMAX.isInterstitialReady(id) ?? false;
       case AdFormat.rewarded:
         final id = _rewardedAdUnitId;
-        return id == null ? false : await max.AppLovinMAX.isRewardedAdReady(id) ?? false;
+        return id == null
+            ? false
+            : await max.AppLovinMAX.isRewardedAdReady(id) ?? false;
       case AdFormat.appOpen:
         final id = _appOpenAdUnitId;
-        return id == null ? false : await max.AppLovinMAX.isAppOpenAdReady(id) ?? false;
+        return id == null
+            ? false
+            : await max.AppLovinMAX.isAppOpenAdReady(id) ?? false;
       case AdFormat.banner:
       case AdFormat.native:
         return false;
@@ -259,30 +277,33 @@ final class MaxAdProvider implements AdProvider {
       if (completer.isCompleted || isDisplayed()) return;
       final error = AdError(
         code: 'display_timeout',
-        message: 'no ${format.name} display callback within '
+        message:
+            'no ${format.name} display callback within '
             '${_displayTimeout.inSeconds}s of show',
         providerName: name,
       );
-      _events.add(AdEventFailed(
-        format: format,
-        providerName: name,
-        error: error,
-      ));
+      _events.add(
+        AdEventFailed(format: format, providerName: name, error: error),
+      );
       completer.complete(AdShowResult.failed(error));
     });
   }
 
-  AdShowResult _notConfigured(AdFormat format) => AdShowResult.failed(AdError(
-        code: 'not_configured',
-        message: 'No ${format.name} ad unit configured for MAX',
-        providerName: name,
-      ));
+  AdShowResult _notConfigured(AdFormat format) => AdShowResult.failed(
+    AdError(
+      code: 'not_configured',
+      message: 'No ${format.name} ad unit configured for MAX',
+      providerName: name,
+    ),
+  );
 
-  AdShowResult _notReady(AdFormat format) => AdShowResult.failed(AdError(
-        code: 'not_ready',
-        message: '${format.name} ad not loaded',
-        providerName: name,
-      ));
+  AdShowResult _notReady(AdFormat format) => AdShowResult.failed(
+    AdError(
+      code: 'not_ready',
+      message: '${format.name} ad not loaded',
+      providerName: name,
+    ),
+  );
 
   @override
   Widget banner({required AdBannerSize size, String? placement}) {

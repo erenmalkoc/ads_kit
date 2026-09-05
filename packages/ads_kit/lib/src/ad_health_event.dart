@@ -40,6 +40,7 @@ final class AdProviderSwitched extends AdHealthEvent {
   final ProviderSwitchReason reason;
 
   @override
-  String toString() => 'AdProviderSwitched($fromProvider -> $toProvider, '
+  String toString() =>
+      'AdProviderSwitched($fromProvider -> $toProvider, '
       'reason: $reason)';
 }

@@ -32,14 +32,13 @@ AdRevenue levelPlayImpressionToAdRevenue({
   required String? networkName,
   required String? adUnitId,
   required String? precision,
-}) =>
-    AdRevenue(
-      value: revenue ?? 0,
-      currencyCode: 'USD',
-      networkName: networkName ?? 'unknown',
-      adUnitId: adUnitId ?? '',
-      precision: mapLevelPlayPrecision(precision),
-    );
+}) => AdRevenue(
+  value: revenue ?? 0,
+  currencyCode: 'USD',
+  networkName: networkName ?? 'unknown',
+  adUnitId: adUnitId ?? '',
+  precision: mapLevelPlayPrecision(precision),
+);
 
 /// LevelPlay's Dart plugin does not publish a stable error-code -> reason
 /// enum (unlike AppLovin MAX's `ErrorCode`), so [AdError.code] here is a
@@ -50,17 +49,15 @@ AdError levelPlayErrorToAdError({
   required int errorCode,
   required String errorMessage,
   required String providerName,
-}) =>
-    AdError(
-      code: 'levelplay_$errorCode',
-      message: errorMessage,
-      providerName: providerName,
-      // 509 is ironSource's documented "no ads to show"; the message match
-      // is a defensive net since the int codes aren't a published enum
-      // (observed live: 509 "Mediation No fill").
-      isNoFill: errorCode == 509 ||
-          errorMessage.toLowerCase().contains('no fill'),
-    );
+}) => AdError(
+  code: 'levelplay_$errorCode',
+  message: errorMessage,
+  providerName: providerName,
+  // 509 is ironSource's documented "no ads to show"; the message match
+  // is a defensive net since the int codes aren't a published enum
+  // (observed live: 509 "Mediation No fill").
+  isNoFill: errorCode == 509 || errorMessage.toLowerCase().contains('no fill'),
+);
 
 /// The global impression-data listener fires for every ad format at once,
 /// and LevelPlay's Dart plugin exposes the format only as a free-text
@@ -86,11 +83,10 @@ AdEventRewardEarned levelPlayRewardToAdEvent({
   required String rewardName,
   required int rewardAmount,
   String? placement,
-}) =>
-    AdEventRewardEarned(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-      rewardType: rewardName,
-      rewardAmount: rewardAmount,
-    );
+}) => AdEventRewardEarned(
+  format: format,
+  providerName: providerName,
+  placement: placement,
+  rewardType: rewardName,
+  rewardAmount: rewardAmount,
+);

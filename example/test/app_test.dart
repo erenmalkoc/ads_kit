@@ -62,7 +62,9 @@ void main() {
     expect(find.text('Active provider: demo_b'), findsOneWidget);
   });
 
-  testWidgets('preloading then showing an interstitial logs a shown event', (tester) async {
+  testWidgets('preloading then showing an interstitial logs a shown event', (
+    tester,
+  ) async {
     await tester.pumpWidget(const AdsKitExampleApp());
     await tester.pump();
 
@@ -73,7 +75,9 @@ void main() {
     expect(find.textContaining('revenue:'), findsWidgets);
   });
 
-  testWidgets('showing a rewarded ad logs a reward-earned event', (tester) async {
+  testWidgets('showing a rewarded ad logs a reward-earned event', (
+    tester,
+  ) async {
     await tester.pumpWidget(const AdsKitExampleApp());
     await tester.pump();
 
@@ -83,7 +87,9 @@ void main() {
     expect(find.textContaining('reward earned'), findsWidgets);
   });
 
-  testWidgets('toggling the banner renders the active provider banner widget', (tester) async {
+  testWidgets('toggling the banner renders the active provider banner widget', (
+    tester,
+  ) async {
     await tester.pumpWidget(const AdsKitExampleApp());
     await tester.pump();
 

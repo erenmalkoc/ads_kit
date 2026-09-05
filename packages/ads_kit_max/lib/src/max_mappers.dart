@@ -30,14 +30,13 @@ AdRevenue maxAdToAdRevenue({
   required String networkName,
   required String adUnitId,
   required String revenuePrecision,
-}) =>
-    AdRevenue(
-      value: revenue,
-      currencyCode: 'USD',
-      networkName: networkName,
-      adUnitId: adUnitId,
-      precision: mapMaxRevenuePrecision(revenuePrecision),
-    );
+}) => AdRevenue(
+  value: revenue,
+  currencyCode: 'USD',
+  networkName: networkName,
+  adUnitId: adUnitId,
+  precision: mapMaxRevenuePrecision(revenuePrecision),
+);
 
 /// `MaxError.code` is a real Dart enum (`ErrorCode`) unlike LevelPlay's
 /// bare int, so we namespace its `.name` rather than invent our own
@@ -47,13 +46,12 @@ AdError maxErrorToAdError({
   required String errorCodeName,
   required String message,
   required String providerName,
-}) =>
-    AdError(
-      code: 'max_$errorCodeName',
-      message: message,
-      providerName: providerName,
-      isNoFill: errorCodeName == 'noFill',
-    );
+}) => AdError(
+  code: 'max_$errorCodeName',
+  message: message,
+  providerName: providerName,
+  isNoFill: errorCodeName == 'noFill',
+);
 
 AdEventRewardEarned maxRewardToAdEvent({
   required AdFormat format,
@@ -61,11 +59,10 @@ AdEventRewardEarned maxRewardToAdEvent({
   required String rewardLabel,
   required int rewardAmount,
   String? placement,
-}) =>
-    AdEventRewardEarned(
-      format: format,
-      providerName: providerName,
-      placement: placement,
-      rewardType: rewardLabel,
-      rewardAmount: rewardAmount,
-    );
+}) => AdEventRewardEarned(
+  format: format,
+  providerName: providerName,
+  placement: placement,
+  rewardType: rewardLabel,
+  rewardAmount: rewardAmount,
+);

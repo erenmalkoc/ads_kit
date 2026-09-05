@@ -5,7 +5,11 @@ import 'package:flutter/widgets.dart';
 
 /// A controllable [AdProvider] test double — no real ad SDK involved.
 class FakeAdProvider implements AdProvider {
-  FakeAdProvider(this.name, {this.failInit = false, this.failUpdateConsent = false});
+  FakeAdProvider(
+    this.name, {
+    this.failInit = false,
+    this.failUpdateConsent = false,
+  });
 
   @override
   final String name;
@@ -75,8 +79,7 @@ class FakeAdProvider implements AdProvider {
       rewardedResult;
 
   @override
-  Future<AdShowResult> showAppOpen({String? placement}) async =>
-      appOpenResult;
+  Future<AdShowResult> showAppOpen({String? placement}) async => appOpenResult;
 
   @override
   Widget banner({required AdBannerSize size, String? placement}) =>

@@ -12,7 +12,10 @@ void main() {
 
     test('empty map falls back to safe defaults', () {
       final config = AdRuntimeConfig.fromJson(const {});
-      expect(config.activeProvider, AdRuntimeConfig.safeDefaults.activeProvider);
+      expect(
+        config.activeProvider,
+        AdRuntimeConfig.safeDefaults.activeProvider,
+      );
     });
 
     test('parses a fully valid schema', () {
@@ -29,10 +32,11 @@ void main() {
 
       expect(config.activeProvider, 'levelplay');
       expect(config.fallbackProvider, 'max');
-      expect(
-        config.formatsEnabled,
-        {AdFormat.interstitial, AdFormat.rewarded, AdFormat.banner},
-      );
+      expect(config.formatsEnabled, {
+        AdFormat.interstitial,
+        AdFormat.rewarded,
+        AdFormat.banner,
+      });
       expect(config.interstitialMinInterval, const Duration(seconds: 45));
       expect(config.interstitialMaxPerSession, 5);
       expect(config.coldStartGrace, const Duration(seconds: 20));
@@ -47,14 +51,17 @@ void main() {
       expect(config.formatsEnabled, {AdFormat.interstitial});
     });
 
-    test('wrong-typed active_provider falls back to default for that field only', () {
-      final config = AdRuntimeConfig.fromJson(const {
-        'active_provider': 42,
-        'fallback_provider': 'max',
-      });
-      expect(config.activeProvider, 'noop');
-      expect(config.fallbackProvider, 'max');
-    });
+    test(
+      'wrong-typed active_provider falls back to default for that field only',
+      () {
+        final config = AdRuntimeConfig.fromJson(const {
+          'active_provider': 42,
+          'fallback_provider': 'max',
+        });
+        expect(config.activeProvider, 'noop');
+        expect(config.fallbackProvider, 'max');
+      },
+    );
 
     test('wrong-typed numeric fields fall back to their defaults', () {
       final config = AdRuntimeConfig.fromJson(const {
@@ -136,20 +143,29 @@ void main() {
       expect(config.recoveryCooldown, const Duration(seconds: 120));
       expect(config.recoveryMaxAttempts, 5);
 
-      final defaulted = AdRuntimeConfig.fromJson(const {'active_provider': 'x'});
-      expect(defaulted.recoveryCooldown,
-          AdRuntimeConfig.safeDefaults.recoveryCooldown);
-      expect(defaulted.recoveryMaxAttempts,
-          AdRuntimeConfig.safeDefaults.recoveryMaxAttempts);
+      final defaulted = AdRuntimeConfig.fromJson(const {
+        'active_provider': 'x',
+      });
+      expect(
+        defaulted.recoveryCooldown,
+        AdRuntimeConfig.safeDefaults.recoveryCooldown,
+      );
+      expect(
+        defaulted.recoveryMaxAttempts,
+        AdRuntimeConfig.safeDefaults.recoveryMaxAttempts,
+      );
     });
 
-    test('double values for integer/duration fields are coerced, not dropped', () {
-      final config = AdRuntimeConfig.fromJson(const {
-        'interstitial_max_per_session': 3.0,
-        'cold_start_grace_sec': 30.0,
-      });
-      expect(config.interstitialMaxPerSession, 3);
-      expect(config.coldStartGrace, const Duration(seconds: 30));
-    });
+    test(
+      'double values for integer/duration fields are coerced, not dropped',
+      () {
+        final config = AdRuntimeConfig.fromJson(const {
+          'interstitial_max_per_session': 3.0,
+          'cold_start_grace_sec': 30.0,
+        });
+        expect(config.interstitialMaxPerSession, 3);
+        expect(config.coldStartGrace, const Duration(seconds: 30));
+      },
+    );
   });
 }

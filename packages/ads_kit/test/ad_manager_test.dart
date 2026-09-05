@@ -15,12 +15,15 @@ void main() {
   });
 
   group('AdManager lifecycle via NoopAdProvider', () {
-    test('boots to noop when no config source is supplied any provider', () async {
-      await AdManager.boot(configSource: FakeAdConfigSource(null));
+    test(
+      'boots to noop when no config source is supplied any provider',
+      () async {
+        await AdManager.boot(configSource: FakeAdConfigSource(null));
 
-      expect(AdManager.activeProviderName, 'noop');
-      expect(AdManager.I.name, 'noop');
-    });
+        expect(AdManager.activeProviderName, 'noop');
+        expect(AdManager.I.name, 'noop');
+      },
+    );
 
     test('noop never shows anything and never throws', () async {
       await AdManager.boot(configSource: FakeAdConfigSource(null));
@@ -29,10 +32,7 @@ void main() {
       expect((await AdManager.I.showInterstitial()).shown, isFalse);
       expect((await AdManager.I.showRewarded()).shown, isFalse);
       expect((await AdManager.I.showAppOpen()).shown, isFalse);
-      expect(
-        AdManager.I.banner(size: AdBannerSize.banner),
-        isA<SizedBox>(),
-      );
+      expect(AdManager.I.banner(size: AdBannerSize.banner), isA<SizedBox>());
     });
 
     test('direct init()/dispose() on AdManager.I is not supported', () async {
@@ -49,58 +49,67 @@ void main() {
   });
 
   group('AdManager provider resolution', () {
-    test('boot activates the registered provider named by active_provider', () async {
-      AdManager.register('fake', () => FakeAdProvider('fake'));
+    test(
+      'boot activates the registered provider named by active_provider',
+      () async {
+        AdManager.register('fake', () => FakeAdProvider('fake'));
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'fake',
-          'fallback_provider': 'noop',
-        }),
-      );
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'fake',
+            'fallback_provider': 'noop',
+          }),
+        );
 
-      expect(AdManager.activeProviderName, 'fake');
-      expect(AdManager.I.name, 'fake');
-    });
+        expect(AdManager.activeProviderName, 'fake');
+        expect(AdManager.I.name, 'fake');
+      },
+    );
 
-    test('falls back to fallback_provider when the primary fails to init', () async {
-      AdManager.register('bad', () => FakeAdProvider('bad', failInit: true));
-      AdManager.register('backup', () => FakeAdProvider('backup'));
+    test(
+      'falls back to fallback_provider when the primary fails to init',
+      () async {
+        AdManager.register('bad', () => FakeAdProvider('bad', failInit: true));
+        AdManager.register('backup', () => FakeAdProvider('backup'));
 
-      final events = <AdHealthEvent>[];
-      AdManager.healthEvents.listen(events.add);
+        final events = <AdHealthEvent>[];
+        AdManager.healthEvents.listen(events.add);
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'bad',
-          'fallback_provider': 'backup',
-        }),
-      );
-      await pumpEventLoop();
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'bad',
+            'fallback_provider': 'backup',
+          }),
+        );
+        await pumpEventLoop();
 
-      expect(AdManager.activeProviderName, 'backup');
-      expect(events, hasLength(1));
-      final event = events.single as AdProviderSwitched;
-      expect(event.toProvider, 'backup');
-      expect(event.reason, ProviderSwitchReason.initFailed);
-    });
+        expect(AdManager.activeProviderName, 'backup');
+        expect(events, hasLength(1));
+        final event = events.single as AdProviderSwitched;
+        expect(event.toProvider, 'backup');
+        expect(event.reason, ProviderSwitchReason.initFailed);
+      },
+    );
 
-    test('falls all the way back to noop when both primary and fallback fail', () async {
-      AdManager.register('bad', () => FakeAdProvider('bad', failInit: true));
-      AdManager.register(
-        'alsoBad',
-        () => FakeAdProvider('alsoBad', failInit: true),
-      );
+    test(
+      'falls all the way back to noop when both primary and fallback fail',
+      () async {
+        AdManager.register('bad', () => FakeAdProvider('bad', failInit: true));
+        AdManager.register(
+          'alsoBad',
+          () => FakeAdProvider('alsoBad', failInit: true),
+        );
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'bad',
-          'fallback_provider': 'alsoBad',
-        }),
-      );
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'bad',
+            'fallback_provider': 'alsoBad',
+          }),
+        );
 
-      expect(AdManager.activeProviderName, 'noop');
-    });
+        expect(AdManager.activeProviderName, 'noop');
+      },
+    );
 
     test('an unregistered active_provider key falls back cleanly', () async {
       AdManager.register('backup', () => FakeAdProvider('backup'));
@@ -151,19 +160,22 @@ void main() {
       });
     });
 
-    test('a provider with no extras configured receives an empty map', () async {
-      final fake = FakeAdProvider('fake');
-      AdManager.register('fake', () => fake);
+    test(
+      'a provider with no extras configured receives an empty map',
+      () async {
+        final fake = FakeAdProvider('fake');
+        AdManager.register('fake', () => fake);
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'fake',
-          'fallback_provider': 'noop',
-        }),
-      );
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'fake',
+            'fallback_provider': 'noop',
+          }),
+        );
 
-      expect(fake.lastInitConfig?.extras, isEmpty);
-    });
+        expect(fake.lastInitConfig?.extras, isEmpty);
+      },
+    );
   });
 
   group('AdManager.startNewSession', () {
@@ -180,8 +192,11 @@ void main() {
       );
 
       expect((await AdManager.I.showInterstitial()).shown, isTrue);
-      expect((await AdManager.I.showInterstitial()).suppressed, isTrue,
-          reason: 'session cap of 1 is spent');
+      expect(
+        (await AdManager.I.showInterstitial()).suppressed,
+        isTrue,
+        reason: 'session cap of 1 is spent',
+      );
 
       AdManager.startNewSession();
 
@@ -243,7 +258,10 @@ void main() {
     });
 
     test('switches away when the provider rejects the new consent', () async {
-      AdManager.register('picky', () => FakeAdProvider('picky', failUpdateConsent: true));
+      AdManager.register(
+        'picky',
+        () => FakeAdProvider('picky', failUpdateConsent: true),
+      );
       final backup = FakeAdProvider('backup');
       AdManager.register('backup', () => backup);
       await AdManager.boot(
@@ -261,8 +279,11 @@ void main() {
       await pumpEventLoop();
 
       expect(AdManager.activeProviderName, 'backup');
-      expect(backup.lastInitConfig?.consent, consent,
-          reason: 'the fallback must init with the consent that was rejected');
+      expect(
+        backup.lastInitConfig?.consent,
+        consent,
+        reason: 'the fallback must init with the consent that was rejected',
+      );
       final event = events.single as AdProviderSwitched;
       expect(event.reason, ProviderSwitchReason.consentRejected);
     });
@@ -323,44 +344,55 @@ void main() {
   });
 
   group('AdManager health-triggered auto-fallback', () {
-    test('consecutive AdEventFailed on the active provider trips a fallback', () async {
-      final primary = FakeAdProvider('primary');
-      final backup = FakeAdProvider('backup');
-      AdManager.register('primary', () => primary);
-      AdManager.register('backup', () => backup);
+    test(
+      'consecutive AdEventFailed on the active provider trips a fallback',
+      () async {
+        final primary = FakeAdProvider('primary');
+        final backup = FakeAdProvider('backup');
+        AdManager.register('primary', () => primary);
+        AdManager.register('backup', () => backup);
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'primary',
-          'fallback_provider': 'backup',
-          'health_failure_threshold': 2,
-        }),
-      );
-      expect(AdManager.activeProviderName, 'primary');
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'health_failure_threshold': 2,
+          }),
+        );
+        expect(AdManager.activeProviderName, 'primary');
 
-      AdError error(String provider) => AdError(
-            code: 'no_fill',
-            message: 'no fill',
-            providerName: provider,
-          );
+        AdError error(String provider) => AdError(
+          code: 'no_fill',
+          message: 'no fill',
+          providerName: provider,
+        );
 
-      primary.emit(AdEventFailed(
-        format: AdFormat.interstitial,
-        providerName: 'primary',
-        error: error('primary'),
-      ));
-      await pumpEventLoop();
-      expect(AdManager.activeProviderName, 'primary', reason: 'one failure is below threshold');
+        primary.emit(
+          AdEventFailed(
+            format: AdFormat.interstitial,
+            providerName: 'primary',
+            error: error('primary'),
+          ),
+        );
+        await pumpEventLoop();
+        expect(
+          AdManager.activeProviderName,
+          'primary',
+          reason: 'one failure is below threshold',
+        );
 
-      primary.emit(AdEventFailed(
-        format: AdFormat.interstitial,
-        providerName: 'primary',
-        error: error('primary'),
-      ));
-      await pumpEventLoop();
+        primary.emit(
+          AdEventFailed(
+            format: AdFormat.interstitial,
+            providerName: 'primary',
+            error: error('primary'),
+          ),
+        );
+        await pumpEventLoop();
 
-      expect(AdManager.activeProviderName, 'backup');
-    });
+        expect(AdManager.activeProviderName, 'backup');
+      },
+    );
 
     test('no-fill failures never count toward the health threshold', () async {
       final primary = FakeAdProvider('primary');
@@ -376,21 +408,26 @@ void main() {
       );
 
       for (var i = 0; i < 5; i++) {
-        primary.emit(AdEventFailed(
-          format: AdFormat.rewarded,
-          providerName: 'primary',
-          error: AdError(
-            code: 'levelplay_509',
-            message: 'Mediation No fill',
+        primary.emit(
+          AdEventFailed(
+            format: AdFormat.rewarded,
             providerName: 'primary',
-            isNoFill: true,
+            error: AdError(
+              code: 'levelplay_509',
+              message: 'Mediation No fill',
+              providerName: 'primary',
+              isNoFill: true,
+            ),
           ),
-        ));
+        );
         await pumpEventLoop();
       }
 
-      expect(AdManager.activeProviderName, 'primary',
-          reason: 'no fill is inventory, not provider health');
+      expect(
+        AdManager.activeProviderName,
+        'primary',
+        reason: 'no fill is inventory, not provider health',
+      );
     });
 
     test('a success in between resets the failure streak', () async {
@@ -406,13 +443,28 @@ void main() {
         }),
       );
 
-      AdError error() => AdError(code: 'no_fill', message: 'x', providerName: 'primary');
+      AdError error() =>
+          AdError(code: 'no_fill', message: 'x', providerName: 'primary');
 
-      primary.emit(AdEventFailed(format: AdFormat.interstitial, providerName: 'primary', error: error()));
+      primary.emit(
+        AdEventFailed(
+          format: AdFormat.interstitial,
+          providerName: 'primary',
+          error: error(),
+        ),
+      );
       await pumpEventLoop();
-      primary.emit(AdEventLoaded(format: AdFormat.interstitial, providerName: 'primary'));
+      primary.emit(
+        AdEventLoaded(format: AdFormat.interstitial, providerName: 'primary'),
+      );
       await pumpEventLoop();
-      primary.emit(AdEventFailed(format: AdFormat.interstitial, providerName: 'primary', error: error()));
+      primary.emit(
+        AdEventFailed(
+          format: AdFormat.interstitial,
+          providerName: 'primary',
+          error: error(),
+        ),
+      );
       await pumpEventLoop();
 
       expect(AdManager.activeProviderName, 'primary');
@@ -476,14 +528,20 @@ void main() {
         async.flushMicrotasks();
 
         expect(AdManager.activeProviderName, 'backup');
-        expect(primaryBuilds, buildsAfterBoot + 2,
-            reason: 'exactly recovery_max_attempts retries, then silence');
+        expect(
+          primaryBuilds,
+          buildsAfterBoot + 2,
+          reason: 'exactly recovery_max_attempts retries, then silence',
+        );
       });
     });
 
     test('a manual switch cancels pending recovery', () {
       fakeAsync((async) {
-        AdManager.register('primary', () => FakeAdProvider('primary', failInit: true));
+        AdManager.register(
+          'primary',
+          () => FakeAdProvider('primary', failInit: true),
+        );
         AdManager.register('backup', () => FakeAdProvider('backup'));
         AdManager.register('manualPick', () => FakeAdProvider('manualPick'));
 
@@ -503,32 +561,38 @@ void main() {
 
         async.elapse(const Duration(minutes: 30));
         async.flushMicrotasks();
-        expect(AdManager.activeProviderName, 'manualPick',
-            reason: 'recovery must not fight an explicit manual choice');
+        expect(
+          AdManager.activeProviderName,
+          'manualPick',
+          reason: 'recovery must not fight an explicit manual choice',
+        );
       });
     });
 
-    test('the app never sees an exception when the delegate throws mid-show', () async {
-      final flaky = _ThrowingAdProvider('flaky');
-      AdManager.register('flaky', () => flaky);
-      AdManager.register('backup', () => FakeAdProvider('backup'));
+    test(
+      'the app never sees an exception when the delegate throws mid-show',
+      () async {
+        final flaky = _ThrowingAdProvider('flaky');
+        AdManager.register('flaky', () => flaky);
+        AdManager.register('backup', () => FakeAdProvider('backup'));
 
-      await AdManager.boot(
-        configSource: FakeAdConfigSource({
-          'active_provider': 'flaky',
-          'fallback_provider': 'backup',
-          'health_failure_threshold': 1,
-          'cold_start_grace_sec': 0,
-        }),
-      );
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'flaky',
+            'fallback_provider': 'backup',
+            'health_failure_threshold': 1,
+            'cold_start_grace_sec': 0,
+          }),
+        );
 
-      final result = await AdManager.I.showInterstitial();
-      expect(result.shown, isFalse);
-      expect(result.error, isNotNull);
+        final result = await AdManager.I.showInterstitial();
+        expect(result.shown, isFalse);
+        expect(result.error, isNotNull);
 
-      await pumpEventLoop();
-      expect(AdManager.activeProviderName, 'backup');
-    });
+        await pumpEventLoop();
+        expect(AdManager.activeProviderName, 'backup');
+      },
+    );
   });
 }
 

@@ -38,18 +38,21 @@ void main() {
   });
 
   group('maxErrorToAdError', () {
-    test('namespaces the ErrorCode enum name rather than inventing a bucket', () {
-      final error = maxErrorToAdError(
-        errorCodeName: 'noFill',
-        message: 'No ad fill',
-        providerName: 'max',
-      );
+    test(
+      'namespaces the ErrorCode enum name rather than inventing a bucket',
+      () {
+        final error = maxErrorToAdError(
+          errorCodeName: 'noFill',
+          message: 'No ad fill',
+          providerName: 'max',
+        );
 
-      expect(error.code, 'max_noFill');
-      expect(error.message, 'No ad fill');
-      expect(error.providerName, 'max');
-      expect(error.isNoFill, isTrue);
-    });
+        expect(error.code, 'max_noFill');
+        expect(error.message, 'No ad fill');
+        expect(error.providerName, 'max');
+        expect(error.isNoFill, isTrue);
+      },
+    );
 
     test('non-noFill codes stay unflagged', () {
       final error = maxErrorToAdError(

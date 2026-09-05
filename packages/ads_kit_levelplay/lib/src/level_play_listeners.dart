@@ -52,22 +52,26 @@ final class LevelPlayInterstitialListenerAdapter
   final void Function(AdShowResult result) onShowCompleted;
 
   @override
-  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(AdEventLoaded(
-        format: AdFormat.interstitial,
-        providerName: providerName,
-        placement: adInfo.placementName,
-      ));
+  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventLoaded(
+      format: AdFormat.interstitial,
+      providerName: providerName,
+      placement: adInfo.placementName,
+    ),
+  );
 
   @override
-  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(AdEventFailed(
-        format: AdFormat.interstitial,
+  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(
+    AdEventFailed(
+      format: AdFormat.interstitial,
+      providerName: providerName,
+      error: levelPlayErrorToAdError(
+        errorCode: error.errorCode,
+        errorMessage: error.errorMessage,
         providerName: providerName,
-        error: levelPlayErrorToAdError(
-          errorCode: error.errorCode,
-          errorMessage: error.errorMessage,
-          providerName: providerName,
-        ),
-      ));
+      ),
+    ),
+  );
 
   @override
   void onAdInfoChanged(lp.LevelPlayAdInfo adInfo) {}
@@ -75,11 +79,13 @@ final class LevelPlayInterstitialListenerAdapter
   @override
   void onAdDisplayed(lp.LevelPlayAdInfo adInfo) {
     onDisplayStarted();
-    emit(AdEventShown(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: adInfo.placementName,
-    ));
+    emit(
+      AdEventShown(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        placement: adInfo.placementName,
+      ),
+    );
   }
 
   @override
@@ -89,29 +95,35 @@ final class LevelPlayInterstitialListenerAdapter
       errorMessage: error.errorMessage,
       providerName: providerName,
     );
-    emit(AdEventFailed(
-      format: AdFormat.interstitial,
-      providerName: providerName,
-      placement: adInfo.placementName,
-      error: adError,
-    ));
+    emit(
+      AdEventFailed(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        placement: adInfo.placementName,
+        error: adError,
+      ),
+    );
     onShowCompleted(AdShowResult.failed(adError));
   }
 
   @override
-  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(AdEventClicked(
-        format: AdFormat.interstitial,
-        providerName: providerName,
-        placement: adInfo.placementName,
-      ));
-
-  @override
-  void onAdClosed(lp.LevelPlayAdInfo adInfo) {
-    emit(AdEventDismissed(
+  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventClicked(
       format: AdFormat.interstitial,
       providerName: providerName,
       placement: adInfo.placementName,
-    ));
+    ),
+  );
+
+  @override
+  void onAdClosed(lp.LevelPlayAdInfo adInfo) {
+    emit(
+      AdEventDismissed(
+        format: AdFormat.interstitial,
+        providerName: providerName,
+        placement: adInfo.placementName,
+      ),
+    );
     onShowCompleted(AdShowResult.shown());
   }
 }
@@ -137,22 +149,26 @@ final class LevelPlayRewardedListenerAdapter
   bool _rewardEarnedThisShow = false;
 
   @override
-  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(AdEventLoaded(
-        format: AdFormat.rewarded,
-        providerName: providerName,
-        placement: adInfo.placementName,
-      ));
+  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventLoaded(
+      format: AdFormat.rewarded,
+      providerName: providerName,
+      placement: adInfo.placementName,
+    ),
+  );
 
   @override
-  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(AdEventFailed(
-        format: AdFormat.rewarded,
+  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(
+    AdEventFailed(
+      format: AdFormat.rewarded,
+      providerName: providerName,
+      error: levelPlayErrorToAdError(
+        errorCode: error.errorCode,
+        errorMessage: error.errorMessage,
         providerName: providerName,
-        error: levelPlayErrorToAdError(
-          errorCode: error.errorCode,
-          errorMessage: error.errorMessage,
-          providerName: providerName,
-        ),
-      ));
+      ),
+    ),
+  );
 
   @override
   void onAdInfoChanged(lp.LevelPlayAdInfo adInfo) {}
@@ -161,11 +177,13 @@ final class LevelPlayRewardedListenerAdapter
   void onAdDisplayed(lp.LevelPlayAdInfo adInfo) {
     _rewardEarnedThisShow = false;
     onDisplayStarted();
-    emit(AdEventShown(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      placement: adInfo.placementName,
-    ));
+    emit(
+      AdEventShown(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        placement: adInfo.placementName,
+      ),
+    );
   }
 
   @override
@@ -175,42 +193,50 @@ final class LevelPlayRewardedListenerAdapter
       errorMessage: error.errorMessage,
       providerName: providerName,
     );
-    emit(AdEventFailed(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      placement: adInfo.placementName,
-      error: adError,
-    ));
+    emit(
+      AdEventFailed(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        placement: adInfo.placementName,
+        error: adError,
+      ),
+    );
     onShowCompleted(AdShowResult.failed(adError));
   }
 
   @override
-  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(AdEventClicked(
-        format: AdFormat.rewarded,
-        providerName: providerName,
-        placement: adInfo.placementName,
-      ));
-
-  @override
-  void onAdClosed(lp.LevelPlayAdInfo adInfo) {
-    emit(AdEventDismissed(
+  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventClicked(
       format: AdFormat.rewarded,
       providerName: providerName,
       placement: adInfo.placementName,
-    ));
+    ),
+  );
+
+  @override
+  void onAdClosed(lp.LevelPlayAdInfo adInfo) {
+    emit(
+      AdEventDismissed(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        placement: adInfo.placementName,
+      ),
+    );
     onShowCompleted(AdShowResult.shown(rewardEarned: _rewardEarnedThisShow));
   }
 
   @override
   void onAdRewarded(lp.LevelPlayReward reward, lp.LevelPlayAdInfo adInfo) {
     _rewardEarnedThisShow = true;
-    emit(levelPlayRewardToAdEvent(
-      format: AdFormat.rewarded,
-      providerName: providerName,
-      rewardName: reward.name,
-      rewardAmount: reward.amount,
-      placement: adInfo.placementName,
-    ));
+    emit(
+      levelPlayRewardToAdEvent(
+        format: AdFormat.rewarded,
+        providerName: providerName,
+        rewardName: reward.name,
+        rewardAmount: reward.amount,
+        placement: adInfo.placementName,
+      ),
+    );
   }
 }
 
@@ -227,50 +253,62 @@ final class LevelPlayBannerListenerAdapter
   final String? placement;
 
   @override
-  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(AdEventLoaded(
-        format: AdFormat.banner,
-        providerName: providerName,
-        placement: placement,
-      ));
+  void onAdLoaded(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventLoaded(
+      format: AdFormat.banner,
+      providerName: providerName,
+      placement: placement,
+    ),
+  );
 
   @override
-  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(AdEventFailed(
-        format: AdFormat.banner,
+  void onAdLoadFailed(lp.LevelPlayAdError error) => emit(
+    AdEventFailed(
+      format: AdFormat.banner,
+      providerName: providerName,
+      placement: placement,
+      error: levelPlayErrorToAdError(
+        errorCode: error.errorCode,
+        errorMessage: error.errorMessage,
         providerName: providerName,
-        placement: placement,
-        error: levelPlayErrorToAdError(
-          errorCode: error.errorCode,
-          errorMessage: error.errorMessage,
-          providerName: providerName,
-        ),
-      ));
+      ),
+    ),
+  );
 
   @override
-  void onAdDisplayed(lp.LevelPlayAdInfo adInfo) => emit(AdEventShown(
-        format: AdFormat.banner,
-        providerName: providerName,
-        placement: placement,
-      ));
+  void onAdDisplayed(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventShown(
+      format: AdFormat.banner,
+      providerName: providerName,
+      placement: placement,
+    ),
+  );
 
   @override
-  void onAdDisplayFailed(lp.LevelPlayAdInfo adInfo, lp.LevelPlayAdError error) =>
-      emit(AdEventFailed(
-        format: AdFormat.banner,
+  void onAdDisplayFailed(
+    lp.LevelPlayAdInfo adInfo,
+    lp.LevelPlayAdError error,
+  ) => emit(
+    AdEventFailed(
+      format: AdFormat.banner,
+      providerName: providerName,
+      placement: placement,
+      error: levelPlayErrorToAdError(
+        errorCode: error.errorCode,
+        errorMessage: error.errorMessage,
         providerName: providerName,
-        placement: placement,
-        error: levelPlayErrorToAdError(
-          errorCode: error.errorCode,
-          errorMessage: error.errorMessage,
-          providerName: providerName,
-        ),
-      ));
+      ),
+    ),
+  );
 
   @override
-  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(AdEventClicked(
-        format: AdFormat.banner,
-        providerName: providerName,
-        placement: placement,
-      ));
+  void onAdClicked(lp.LevelPlayAdInfo adInfo) => emit(
+    AdEventClicked(
+      format: AdFormat.banner,
+      providerName: providerName,
+      placement: placement,
+    ),
+  );
 
   @override
   void onAdExpanded(lp.LevelPlayAdInfo adInfo) {}
@@ -297,16 +335,18 @@ final class LevelPlayImpressionListenerAdapter
     final format = mapLevelPlayImpressionFormat(impressionData.adFormat);
     if (format == null) return;
 
-    emit(AdEventRevenuePaid(
-      format: format,
-      providerName: providerName,
-      placement: impressionData.placement,
-      revenue: levelPlayImpressionToAdRevenue(
-        revenue: impressionData.revenue,
-        networkName: impressionData.adNetwork,
-        adUnitId: impressionData.mediationAdUnitId,
-        precision: impressionData.precision,
+    emit(
+      AdEventRevenuePaid(
+        format: format,
+        providerName: providerName,
+        placement: impressionData.placement,
+        revenue: levelPlayImpressionToAdRevenue(
+          revenue: impressionData.revenue,
+          networkName: impressionData.adNetwork,
+          adUnitId: impressionData.mediationAdUnitId,
+          precision: impressionData.precision,
+        ),
       ),
-    ));
+    );
   }
 }

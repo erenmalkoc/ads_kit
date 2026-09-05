@@ -13,11 +13,17 @@ void main() {
       );
     });
 
-    test('unknown, empty, or null precision maps to unknown rather than guessing', () {
-      expect(mapLevelPlayPrecision(null), AdRevenuePrecision.unknown);
-      expect(mapLevelPlayPrecision(''), AdRevenuePrecision.unknown);
-      expect(mapLevelPlayPrecision('undisclosed'), AdRevenuePrecision.unknown);
-    });
+    test(
+      'unknown, empty, or null precision maps to unknown rather than guessing',
+      () {
+        expect(mapLevelPlayPrecision(null), AdRevenuePrecision.unknown);
+        expect(mapLevelPlayPrecision(''), AdRevenuePrecision.unknown);
+        expect(
+          mapLevelPlayPrecision('undisclosed'),
+          AdRevenuePrecision.unknown,
+        );
+      },
+    );
   });
 
   group('levelPlayImpressionToAdRevenue', () {
@@ -36,67 +42,82 @@ void main() {
       expect(revenue.precision, AdRevenuePrecision.estimated);
     });
 
-    test('missing fields fall back to safe defaults, never null propagation', () {
-      final revenue = levelPlayImpressionToAdRevenue(
-        revenue: null,
-        networkName: null,
-        adUnitId: null,
-        precision: null,
-      );
+    test(
+      'missing fields fall back to safe defaults, never null propagation',
+      () {
+        final revenue = levelPlayImpressionToAdRevenue(
+          revenue: null,
+          networkName: null,
+          adUnitId: null,
+          precision: null,
+        );
 
-      expect(revenue.value, 0);
-      expect(revenue.networkName, 'unknown');
-      expect(revenue.adUnitId, '');
-      expect(revenue.precision, AdRevenuePrecision.unknown);
-    });
+        expect(revenue.value, 0);
+        expect(revenue.networkName, 'unknown');
+        expect(revenue.adUnitId, '');
+        expect(revenue.precision, AdRevenuePrecision.unknown);
+      },
+    );
   });
 
   group('levelPlayErrorToAdError', () {
-    test('bucket-codes the numeric error and preserves the message and provider', () {
-      final error = levelPlayErrorToAdError(
-        errorCode: 509,
-        errorMessage: 'no fill',
-        providerName: 'levelplay',
-      );
-
-      expect(error.code, 'levelplay_509');
-      expect(error.message, 'no fill');
-      expect(error.providerName, 'levelplay');
-    });
-
-    test('flags no fill by code 509 or message, other errors stay unflagged', () {
-      expect(
-        levelPlayErrorToAdError(
+    test(
+      'bucket-codes the numeric error and preserves the message and provider',
+      () {
+        final error = levelPlayErrorToAdError(
           errorCode: 509,
-          errorMessage: 'Mediation No fill',
+          errorMessage: 'no fill',
           providerName: 'levelplay',
-        ).isNoFill,
-        isTrue,
-      );
-      expect(
-        levelPlayErrorToAdError(
-          errorCode: 1022,
-          errorMessage: 'Mediation No Fill',
-          providerName: 'levelplay',
-        ).isNoFill,
-        isTrue,
-        reason: 'message match must catch no fill under an unknown code',
-      );
-      expect(
-        levelPlayErrorToAdError(
-          errorCode: 510,
-          errorMessage: 'internal error',
-          providerName: 'levelplay',
-        ).isNoFill,
-        isFalse,
-      );
-    });
+        );
+
+        expect(error.code, 'levelplay_509');
+        expect(error.message, 'no fill');
+        expect(error.providerName, 'levelplay');
+      },
+    );
+
+    test(
+      'flags no fill by code 509 or message, other errors stay unflagged',
+      () {
+        expect(
+          levelPlayErrorToAdError(
+            errorCode: 509,
+            errorMessage: 'Mediation No fill',
+            providerName: 'levelplay',
+          ).isNoFill,
+          isTrue,
+        );
+        expect(
+          levelPlayErrorToAdError(
+            errorCode: 1022,
+            errorMessage: 'Mediation No Fill',
+            providerName: 'levelplay',
+          ).isNoFill,
+          isTrue,
+          reason: 'message match must catch no fill under an unknown code',
+        );
+        expect(
+          levelPlayErrorToAdError(
+            errorCode: 510,
+            errorMessage: 'internal error',
+            providerName: 'levelplay',
+          ).isNoFill,
+          isFalse,
+        );
+      },
+    );
   });
 
   group('mapLevelPlayImpressionFormat', () {
     test('matches known formats case-insensitively', () {
-      expect(mapLevelPlayImpressionFormat('interstitial'), AdFormat.interstitial);
-      expect(mapLevelPlayImpressionFormat('INTERSTITIAL'), AdFormat.interstitial);
+      expect(
+        mapLevelPlayImpressionFormat('interstitial'),
+        AdFormat.interstitial,
+      );
+      expect(
+        mapLevelPlayImpressionFormat('INTERSTITIAL'),
+        AdFormat.interstitial,
+      );
       expect(mapLevelPlayImpressionFormat('rewardedVideo'), AdFormat.rewarded);
       expect(mapLevelPlayImpressionFormat('REWARDED'), AdFormat.rewarded);
       expect(mapLevelPlayImpressionFormat('banner'), AdFormat.banner);

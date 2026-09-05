@@ -87,18 +87,20 @@ final class LevelPlayAdProvider implements AdProvider {
       final adUnitId = config.extras['interstitial_ad_unit_id'];
       if (adUnitId != null && adUnitId.isNotEmpty) {
         _interstitial = lp.LevelPlayInterstitialAd(adUnitId: adUnitId)
-          ..setListener(LevelPlayInterstitialListenerAdapter(
-            providerName: name,
-            emit: _events.add,
-            onDisplayStarted: () => _interstitialDisplayed = true,
-            onShowCompleted: (result) {
-              final completer = _interstitialShow;
-              _interstitialShow = null;
-              if (completer != null && !completer.isCompleted) {
-                completer.complete(result);
-              }
-            },
-          ));
+          ..setListener(
+            LevelPlayInterstitialListenerAdapter(
+              providerName: name,
+              emit: _events.add,
+              onDisplayStarted: () => _interstitialDisplayed = true,
+              onShowCompleted: (result) {
+                final completer = _interstitialShow;
+                _interstitialShow = null;
+                if (completer != null && !completer.isCompleted) {
+                  completer.complete(result);
+                }
+              },
+            ),
+          );
       }
     }
 
@@ -106,18 +108,20 @@ final class LevelPlayAdProvider implements AdProvider {
       final adUnitId = config.extras['rewarded_ad_unit_id'];
       if (adUnitId != null && adUnitId.isNotEmpty) {
         _rewarded = lp.LevelPlayRewardedAd(adUnitId: adUnitId)
-          ..setListener(LevelPlayRewardedListenerAdapter(
-            providerName: name,
-            emit: _events.add,
-            onDisplayStarted: () => _rewardedDisplayed = true,
-            onShowCompleted: (result) {
-              final completer = _rewardedShow;
-              _rewardedShow = null;
-              if (completer != null && !completer.isCompleted) {
-                completer.complete(result);
-              }
-            },
-          ));
+          ..setListener(
+            LevelPlayRewardedListenerAdapter(
+              providerName: name,
+              emit: _events.add,
+              onDisplayStarted: () => _rewardedDisplayed = true,
+              onShowCompleted: (result) {
+                final completer = _rewardedShow;
+                _rewardedShow = null;
+                if (completer != null && !completer.isCompleted) {
+                  completer.complete(result);
+                }
+              },
+            ),
+          );
       }
     }
 
@@ -229,38 +233,43 @@ final class LevelPlayAdProvider implements AdProvider {
       if (completer.isCompleted || isDisplayed()) return;
       final error = AdError(
         code: 'display_timeout',
-        message: 'no ${format.name} display callback within '
+        message:
+            'no ${format.name} display callback within '
             '${_displayTimeout.inSeconds}s of showAd',
         providerName: name,
       );
-      _events.add(AdEventFailed(
-        format: format,
-        providerName: name,
-        error: error,
-      ));
+      _events.add(
+        AdEventFailed(format: format, providerName: name, error: error),
+      );
       completer.complete(AdShowResult.failed(error));
     });
   }
 
   @override
   Future<AdShowResult> showAppOpen({String? placement}) async =>
-      AdShowResult.failed(AdError(
-        code: 'unsupported_format',
-        message: 'LevelPlay does not support app open ads',
-        providerName: name,
-      ));
+      AdShowResult.failed(
+        AdError(
+          code: 'unsupported_format',
+          message: 'LevelPlay does not support app open ads',
+          providerName: name,
+        ),
+      );
 
-  AdShowResult _notConfigured(AdFormat format) => AdShowResult.failed(AdError(
-        code: 'not_configured',
-        message: 'No ${format.name} ad unit configured for LevelPlay',
-        providerName: name,
-      ));
+  AdShowResult _notConfigured(AdFormat format) => AdShowResult.failed(
+    AdError(
+      code: 'not_configured',
+      message: 'No ${format.name} ad unit configured for LevelPlay',
+      providerName: name,
+    ),
+  );
 
-  AdShowResult _notReady(AdFormat format) => AdShowResult.failed(AdError(
-        code: 'not_ready',
-        message: '${format.name} ad not loaded',
-        providerName: name,
-      ));
+  AdShowResult _notReady(AdFormat format) => AdShowResult.failed(
+    AdError(
+      code: 'not_ready',
+      message: '${format.name} ad not loaded',
+      providerName: name,
+    ),
+  );
 
   @override
   Widget banner({required AdBannerSize size, String? placement}) {

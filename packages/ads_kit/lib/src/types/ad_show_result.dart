@@ -16,27 +16,24 @@ final class AdShowResult {
 
   /// The ad was displayed to the user.
   factory AdShowResult.shown({bool rewardEarned = false}) => AdShowResult._(
-        shown: true,
-        rewardEarned: rewardEarned,
-        suppressed: false,
-      );
+    shown: true,
+    rewardEarned: rewardEarned,
+    suppressed: false,
+  );
 
   /// The show attempt was blocked by policy (frequency cap, cold-start
   /// grace, disabled country, format disabled) before reaching the SDK.
-  factory AdShowResult.suppressed() => const AdShowResult._(
-        shown: false,
-        rewardEarned: false,
-        suppressed: true,
-      );
+  factory AdShowResult.suppressed() =>
+      const AdShowResult._(shown: false, rewardEarned: false, suppressed: true);
 
   /// The SDK attempted to show and failed (not ready, no fill, display
   /// error, ...).
   factory AdShowResult.failed(AdError error) => AdShowResult._(
-        shown: false,
-        rewardEarned: false,
-        suppressed: false,
-        error: error,
-      );
+    shown: false,
+    rewardEarned: false,
+    suppressed: false,
+    error: error,
+  );
 
   final bool shown;
   final bool rewardEarned;
@@ -44,6 +41,7 @@ final class AdShowResult {
   final AdError? error;
 
   @override
-  String toString() => 'AdShowResult(shown: $shown, '
+  String toString() =>
+      'AdShowResult(shown: $shown, '
       'rewardEarned: $rewardEarned, suppressed: $suppressed, error: $error)';
 }

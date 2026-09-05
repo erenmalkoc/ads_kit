@@ -42,9 +42,12 @@ final class AdManager {
   static String? _countryCode;
   static Map<String, Map<String, String>> _bootProviderExtras = const {};
 
-  static FrequencyGuard _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
-  static HealthMonitor _healthMonitor =
-      HealthMonitor(failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold);
+  static FrequencyGuard _frequencyGuard = _guardFrom(
+    AdRuntimeConfig.safeDefaults,
+  );
+  static HealthMonitor _healthMonitor = HealthMonitor(
+    failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold,
+  );
 
   static final _healthEvents = StreamController<AdHealthEvent>.broadcast();
   static final _managed = _ManagedAdProvider();
@@ -109,7 +112,9 @@ final class AdManager {
     }
     _config = AdRuntimeConfig.fromJson(raw);
     _frequencyGuard = _guardFrom(_config);
-    _healthMonitor = HealthMonitor(failureThreshold: _config.healthFailureThreshold);
+    _healthMonitor = HealthMonitor(
+      failureThreshold: _config.healthFailureThreshold,
+    );
 
     await _activate(
       _config.activeProvider,
@@ -132,10 +137,10 @@ final class AdManager {
   ///
   /// Falls back exactly like [boot] does if [key] fails to init.
   static Future<void> switchProvider(String key) => _activate(
-        key,
-        reason: ProviderSwitchReason.manual,
-        emitOnDirectSuccess: true,
-      );
+    key,
+    reason: ProviderSwitchReason.manual,
+    emitOnDirectSuccess: true,
+  );
 
   /// Re-applies changed consent to the active provider mid-session — call
   /// this after the user completes a consent flow, instead of re-booting.
@@ -150,8 +155,9 @@ final class AdManager {
     try {
       await _active.updateConsent(consent);
     } catch (_) {
-      final nextKey =
-          _activeKey == _config.fallbackProvider ? 'noop' : _config.fallbackProvider;
+      final nextKey = _activeKey == _config.fallbackProvider
+          ? 'noop'
+          : _config.fallbackProvider;
       await _activate(
         nextKey,
         reason: ProviderSwitchReason.consentRejected,
@@ -178,30 +184,31 @@ final class AdManager {
     _countryCode = null;
     _bootProviderExtras = const {};
     _frequencyGuard = _guardFrom(AdRuntimeConfig.safeDefaults);
-    _healthMonitor =
-        HealthMonitor(failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold);
+    _healthMonitor = HealthMonitor(
+      failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold,
+    );
     _managed._bindTo(_active, _activeKey);
   }
 
   static FrequencyGuard _guardFrom(AdRuntimeConfig config) => FrequencyGuard(
-        config: FrequencyGuardConfig(
-          coldStartGrace: config.coldStartGrace,
-          minInterval: config.interstitialMinInterval,
-          maxPerSession: config.interstitialMaxPerSession,
-          disabledCountries: config.disabledCountries,
-        ),
-      );
+    config: FrequencyGuardConfig(
+      coldStartGrace: config.coldStartGrace,
+      minInterval: config.interstitialMinInterval,
+      maxPerSession: config.interstitialMaxPerSession,
+      disabledCountries: config.disabledCountries,
+    ),
+  );
 
   static AdConfig _currentAdConfig(String providerKey) => AdConfig(
-        consent: _consent,
-        formatsEnabled: _config.formatsEnabled,
-        countryCode: _countryCode,
-        extras: resolveProviderExtras(
-          bootExtras: _bootProviderExtras[providerKey] ?? const {},
-          remoteExtras: _config.providerExtras[providerKey] ?? const {},
-          platformSuffix: _platformSuffix,
-        ),
-      );
+    consent: _consent,
+    formatsEnabled: _config.formatsEnabled,
+    countryCode: _countryCode,
+    extras: resolveProviderExtras(
+      bootExtras: _bootProviderExtras[providerKey] ?? const {},
+      remoteExtras: _config.providerExtras[providerKey] ?? const {},
+      platformSuffix: _platformSuffix,
+    ),
+  );
 
   static String get _platformSuffix {
     switch (defaultTargetPlatform) {
@@ -270,13 +277,16 @@ final class AdManager {
 
     _bindActive(provider, resolvedKey);
 
-    final shouldEmit = resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
+    final shouldEmit =
+        resolvedKey != previousKey && (didFallBack || emitOnDirectSuccess);
     if (shouldEmit) {
-      _healthEvents.add(AdProviderSwitched(
-        fromProvider: previousKey,
-        toProvider: resolvedKey,
-        reason: resolvedReason,
-      ));
+      _healthEvents.add(
+        AdProviderSwitched(
+          fromProvider: previousKey,
+          toProvider: resolvedKey,
+          reason: resolvedReason,
+        ),
+      );
     }
 
     if (!identical(previous, provider)) {
@@ -350,11 +360,13 @@ final class AdManager {
     final previousKey = _activeKey;
     _bindActive(provider, _config.activeProvider);
     _recoveryAttempts = 0;
-    _healthEvents.add(AdProviderSwitched(
-      fromProvider: previousKey,
-      toProvider: _activeKey,
-      reason: ProviderSwitchReason.recovered,
-    ));
+    _healthEvents.add(
+      AdProviderSwitched(
+        fromProvider: previousKey,
+        toProvider: _activeKey,
+        reason: ProviderSwitchReason.recovered,
+      ),
+    );
     if (!identical(previous, provider)) {
       unawaited(_safeDispose(previous));
     }
@@ -410,13 +422,16 @@ final class _ManagedAdProvider implements AdProvider {
   }
 
   void _escalateAfterHealthTrip(String unhealthyKey) {
-    final nextKey =
-        unhealthyKey == AdManager._config.fallbackProvider ? 'noop' : AdManager._config.fallbackProvider;
-    unawaited(AdManager._activate(
-      nextKey,
-      reason: ProviderSwitchReason.healthThresholdExceeded,
-      emitOnDirectSuccess: true,
-    ));
+    final nextKey = unhealthyKey == AdManager._config.fallbackProvider
+        ? 'noop'
+        : AdManager._config.fallbackProvider;
+    unawaited(
+      AdManager._activate(
+        nextKey,
+        reason: ProviderSwitchReason.healthThresholdExceeded,
+        emitOnDirectSuccess: true,
+      ),
+    );
   }
 
   @override
@@ -424,21 +439,21 @@ final class _ManagedAdProvider implements AdProvider {
 
   @override
   Future<void> init(AdConfig config) => throw UnsupportedError(
-        'AdManager.I owns provider lifecycle — call AdManager.boot() or '
-        'AdManager.switchProvider() instead of init() directly.',
-      );
+    'AdManager.I owns provider lifecycle — call AdManager.boot() or '
+    'AdManager.switchProvider() instead of init() directly.',
+  );
 
   @override
   Future<void> dispose() => throw UnsupportedError(
-        'AdManager.I owns provider lifecycle — providers are disposed '
-        'automatically when AdManager switches away from them.',
-      );
+    'AdManager.I owns provider lifecycle — providers are disposed '
+    'automatically when AdManager switches away from them.',
+  );
 
   @override
   Future<void> updateConsent(AdConsent consent) => throw UnsupportedError(
-        'Call AdManager.updateConsent() instead — it also handles a '
-        'provider that cannot serve the new consent state.',
-      );
+    'Call AdManager.updateConsent() instead — it also handles a '
+    'provider that cannot serve the new consent state.',
+  );
 
   @override
   Future<void> preload(AdFormat format) async {
@@ -461,7 +476,9 @@ final class _ManagedAdProvider implements AdProvider {
 
   @override
   Future<AdShowResult> showInterstitial({String? placement}) async {
-    final decision = AdManager._frequencyGuard.evaluate(countryCode: AdManager._countryCode);
+    final decision = AdManager._frequencyGuard.evaluate(
+      countryCode: AdManager._countryCode,
+    );
     if (!decision.allowed) return AdShowResult.suppressed();
 
     final key = _delegateKey;
@@ -475,15 +492,15 @@ final class _ManagedAdProvider implements AdProvider {
 
   @override
   Future<AdShowResult> showRewarded({String? placement}) => _safeShow(
-        () => _delegate.showRewarded(placement: placement),
-        _delegateKey,
-      );
+    () => _delegate.showRewarded(placement: placement),
+    _delegateKey,
+  );
 
   @override
   Future<AdShowResult> showAppOpen({String? placement}) => _safeShow(
-        () => _delegate.showAppOpen(placement: placement),
-        _delegateKey,
-      );
+    () => _delegate.showAppOpen(placement: placement),
+    _delegateKey,
+  );
 
   /// Runs a provider `show*` call, converting an uncaught exception into a
   /// failed [AdShowResult] and counting it toward [HealthMonitor] — this is
@@ -498,12 +515,14 @@ final class _ManagedAdProvider implements AdProvider {
     } catch (error) {
       final tripped = AdManager._healthMonitor.recordFailure(key);
       if (tripped) _escalateAfterHealthTrip(key);
-      return AdShowResult.failed(AdError(
-        code: 'uncaught_exception',
-        message: error.toString(),
-        providerName: key,
-        cause: error,
-      ));
+      return AdShowResult.failed(
+        AdError(
+          code: 'uncaught_exception',
+          message: error.toString(),
+          providerName: key,
+          cause: error,
+        ),
+      );
     }
   }
 
