@@ -162,8 +162,9 @@ final class LevelPlayAdProvider implements AdProvider {
       case AdFormat.rewarded:
         await _rewarded?.loadAd();
       case AdFormat.banner:
-        // LevelPlayBannerAdView loads itself once mounted in the widget
-        // tree; there is no standalone preload for it.
+        // The banner widget requests its ad once its platform view is
+        // created (see _LevelPlayBannerHostState); there is no standalone
+        // preload for it.
         break;
       case AdFormat.appOpen:
       case AdFormat.native:
@@ -315,6 +316,10 @@ final class _LevelPlayBannerHost extends StatefulWidget {
 class _LevelPlayBannerHostState extends State<_LevelPlayBannerHost> {
   late final Future<lp.LevelPlayAdSize> _adSize = _resolveAdSize(widget.size);
 
+  /// Held in State, not created in [build], so a parent rebuild keeps the
+  /// same platform view instead of tearing it down for a fresh one.
+  final _bannerKey = GlobalKey<lp.LevelPlayBannerAdViewState>();
+
   static Future<lp.LevelPlayAdSize> _resolveAdSize(AdBannerSize size) async {
     switch (size) {
       case AdBannerSize.banner:
@@ -329,6 +334,18 @@ class _LevelPlayBannerHostState extends State<_LevelPlayBannerHost> {
     }
   }
 
+  /// The native banner view never requests an ad on its own — it loads
+  /// only when loadAd() is called, which needs the view's method channel,
+  /// ready once the platform view has been created.
+  Future<void> _loadBanner() async {
+    try {
+      await _bannerKey.currentState?.loadAd();
+    } catch (_) {
+      // Load failures arrive through the listener's onAdLoadFailed; a
+      // channel error here must never reach the app.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<lp.LevelPlayAdSize>(
@@ -337,7 +354,7 @@ class _LevelPlayBannerHostState extends State<_LevelPlayBannerHost> {
         final adSize = snapshot.data;
         if (adSize == null) return const SizedBox.shrink();
         return lp.LevelPlayBannerAdView(
-          key: GlobalKey<lp.LevelPlayBannerAdViewState>(),
+          key: _bannerKey,
           adUnitId: widget.adUnitId,
           adSize: adSize,
           placementName: widget.placement,
@@ -346,6 +363,7 @@ class _LevelPlayBannerHostState extends State<_LevelPlayBannerHost> {
             emit: widget.emit,
             placement: widget.placement,
           ),
+          onPlatformViewCreated: () => unawaited(_loadBanner()),
         );
       },
     );

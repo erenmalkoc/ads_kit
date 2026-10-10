@@ -126,8 +126,11 @@ restrictive choice: no GDPR consent, and opted out of CCPA sale.
 
 `test/level_play_mappers_test.dart` covers every LevelPlay -> `ads_kit`
 type conversion (`level_play_mappers.dart`) as pure functions over
-primitives — no real SDK calls, no platform channels. The provider and
-listener adapter classes themselves are thin glue over those pure
-functions and the SDK's documented API and aren't independently unit
-tested here, consistent with the rest of this monorepo's policy of not
-writing tests that require a real ad SDK call.
+primitives — no real SDK calls, no platform channels.
+`test/level_play_banner_test.dart` is a widget test against a mocked
+`unity_levelplay_mediation` method channel: the banner keeps one platform
+view across parent rebuilds and requests its ad once that view is
+created. The rest of the provider and the listener adapter classes are
+thin glue over those pure functions and the SDK's documented API and
+aren't independently unit tested here, consistent with the rest of this
+monorepo's policy of not writing tests that require a real ad SDK call.
