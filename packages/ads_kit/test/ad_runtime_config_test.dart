@@ -78,6 +78,19 @@ void main() {
       );
     });
 
+    test('a non-positive health_failure_threshold falls back to default', () {
+      for (final raw in <Object>[0, -1, 0.4]) {
+        final config = AdRuntimeConfig.fromJson({
+          'health_failure_threshold': raw,
+        });
+        expect(
+          config.healthFailureThreshold,
+          AdRuntimeConfig.safeDefaults.healthFailureThreshold,
+          reason: 'health_failure_threshold: $raw',
+        );
+      }
+    });
+
     test('formats_enabled that is not a list falls back to default', () {
       final config = AdRuntimeConfig.fromJson(const {
         'formats_enabled': 'interstitial',

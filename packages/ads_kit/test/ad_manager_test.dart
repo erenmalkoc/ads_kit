@@ -394,6 +394,43 @@ void main() {
       },
     );
 
+    test(
+      'a non-positive health_failure_threshold boots with the default',
+      () async {
+        final primary = FakeAdProvider('primary');
+        AdManager.register('primary', () => primary);
+        AdManager.register('backup', () => FakeAdProvider('backup'));
+
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'health_failure_threshold': 0,
+          }),
+        );
+        expect(AdManager.activeProviderName, 'primary');
+
+        primary.emit(
+          AdEventFailed(
+            format: AdFormat.interstitial,
+            providerName: 'primary',
+            error: AdError(
+              code: 'load_failed',
+              message: 'x',
+              providerName: 'primary',
+            ),
+          ),
+        );
+        await pumpEventLoop();
+
+        expect(
+          AdManager.activeProviderName,
+          'primary',
+          reason: 'the default threshold applies, so one failure is not enough',
+        );
+      },
+    );
+
     test('no-fill failures never count toward the health threshold', () async {
       final primary = FakeAdProvider('primary');
       AdManager.register('primary', () => primary);

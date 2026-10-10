@@ -43,6 +43,10 @@ final class AdRuntimeConfig {
 
   /// Uppercase ISO 3166-1 alpha-2 codes.
   final Set<String> disabledCountries;
+
+  /// Consecutive failures (no-fill excluded) before [AdManager] falls back
+  /// from the active provider. [AdRuntimeConfig.fromJson] treats a value
+  /// below 1 as malformed and uses the default instead.
   final int healthFailureThreshold;
 
   /// Per-provider `AdConfig.extras` values keyed by provider name, from the
@@ -88,7 +92,7 @@ final class AdRuntimeConfig {
           _readCountries(raw['disabled_countries']) ??
           safeDefaults.disabledCountries,
       healthFailureThreshold:
-          _readInt(raw, 'health_failure_threshold') ??
+          _readPositiveInt(raw, 'health_failure_threshold') ??
           safeDefaults.healthFailureThreshold,
       providerExtras:
           _readProviderExtras(raw['providers']) ?? safeDefaults.providerExtras,
@@ -111,6 +115,13 @@ final class AdRuntimeConfig {
     if (value is int) return value;
     if (value is double) return value.toInt();
     return null;
+  }
+
+  /// [_readInt] for counts where zero or less is meaningless — such a value
+  /// is malformed and falls back to the default like a wrong type would.
+  static int? _readPositiveInt(Map<String, dynamic> raw, String key) {
+    final value = _readInt(raw, key);
+    return (value != null && value > 0) ? value : null;
   }
 
   static Duration? _readSeconds(dynamic value) {
