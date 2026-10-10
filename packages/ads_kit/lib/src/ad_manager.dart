@@ -55,6 +55,10 @@ final class AdManager {
   static Timer? _recoveryTimer;
   static int _recoveryAttempts = 0;
 
+  /// Bumped on every bind, so an async step that started earlier (a
+  /// recovery attempt still initializing) can tell it has been overtaken.
+  static int _bindEpoch = 0;
+
   /// The provider the app talks to. Stable across `boot`/`switchProvider`
   /// calls and automatic health-triggered fallbacks — it's always this same
   /// object, forwarding to whichever real provider is currently active.
@@ -173,6 +177,7 @@ final class AdManager {
     _recoveryTimer?.cancel();
     _recoveryTimer = null;
     _recoveryAttempts = 0;
+    _bindEpoch++;
     await _safeDispose(_active);
     _factories
       ..clear()
@@ -298,6 +303,7 @@ final class AdManager {
   }
 
   static void _bindActive(AdProvider provider, String key) {
+    _bindEpoch++;
     _active = provider;
     _activeKey = key;
     _healthMonitor.reset(key);
@@ -351,7 +357,15 @@ final class AdManager {
   /// attempt itself.
   static Future<void> _attemptRecovery() async {
     _recoveryAttempts++;
+    final epoch = _bindEpoch;
     final provider = await _tryCreateAndInit(_config.activeProvider);
+    if (epoch != _bindEpoch) {
+      // Another provider was bound while this attempt initialized (a
+      // manual switch, a consent change, a fallback). That newer choice
+      // wins, and its own activation already decided about recovery.
+      if (provider != null) unawaited(_safeDispose(provider));
+      return;
+    }
     if (provider == null) {
       _maybeScheduleRecovery(ProviderSwitchReason.initFailed);
       return;

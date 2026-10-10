@@ -697,6 +697,54 @@ void main() {
       });
     });
 
+    test('a switch made while a recovery attempt initializes wins', () {
+      fakeAsync((async) {
+        final recoveryInit = Completer<void>();
+        final primaries = <FakeAdProvider>[];
+        AdManager.register('primary', () {
+          // The boot-time init fails; the recovery attempt's init is slow.
+          final primary = primaries.isEmpty
+              ? FakeAdProvider('primary', failInit: true)
+              : FakeAdProvider('primary', initGate: recoveryInit.future);
+          primaries.add(primary);
+          return primary;
+        });
+        AdManager.register('backup', () => FakeAdProvider('backup'));
+        AdManager.register('manualPick', () => FakeAdProvider('manualPick'));
+
+        AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'recovery_cooldown_sec': 60,
+          }),
+        );
+        async.flushMicrotasks();
+        expect(AdManager.activeProviderName, 'backup');
+
+        final events = <AdHealthEvent>[];
+        AdManager.healthEvents.listen(events.add);
+
+        async.elapse(const Duration(seconds: 61));
+        expect(primaries, hasLength(2), reason: 'recovery is initializing');
+
+        AdManager.switchProvider('manualPick');
+        async.flushMicrotasks();
+        recoveryInit.complete();
+        async.flushMicrotasks();
+
+        expect(
+          AdManager.activeProviderName,
+          'manualPick',
+          reason: 'the newer manual choice must not be overridden',
+        );
+        expect(primaries.last.disposed, isTrue);
+        expect(events.whereType<AdProviderSwitched>().map((e) => e.reason), [
+          ProviderSwitchReason.manual,
+        ]);
+      });
+    });
+
     test(
       'the app never sees an exception when the delegate throws mid-show',
       () async {
