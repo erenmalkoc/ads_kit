@@ -9,6 +9,7 @@ class FakeAdProvider implements AdProvider {
     this.name, {
     this.failInit = false,
     this.failUpdateConsent = false,
+    this.initGate,
   });
 
   @override
@@ -16,6 +17,10 @@ class FakeAdProvider implements AdProvider {
 
   /// When true, [init] throws instead of succeeding.
   final bool failInit;
+
+  /// When set, [init] waits for this future before finishing — a slow SDK
+  /// init, for races against an activation that is still in flight.
+  final Future<void>? initGate;
 
   /// When true, [updateConsent] throws — like MAX refusing a
   /// child-directed user.
@@ -43,6 +48,8 @@ class FakeAdProvider implements AdProvider {
   Future<void> init(AdConfig config) async {
     initCallCount++;
     lastInitConfig = config;
+    final gate = initGate;
+    if (gate != null) await gate;
     if (failInit) throw Exception('$name: init failed');
     initialized = true;
   }

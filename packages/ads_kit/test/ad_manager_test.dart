@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ads_kit/ads_kit.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
@@ -507,6 +509,95 @@ void main() {
       expect(AdManager.activeProviderName, 'primary');
     });
 
+    test(
+      'starts one fallback while it initializes, however many failures follow',
+      () async {
+        final primary = FakeAdProvider('primary');
+        final backupInit = Completer<void>();
+        final backups = <FakeAdProvider>[];
+        AdManager.register('primary', () => primary);
+        AdManager.register('backup', () {
+          final backup = FakeAdProvider('backup', initGate: backupInit.future);
+          backups.add(backup);
+          return backup;
+        });
+
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'primary',
+            'fallback_provider': 'backup',
+            'health_failure_threshold': 2,
+          }),
+        );
+
+        final events = <AdHealthEvent>[];
+        AdManager.healthEvents.listen(events.add);
+
+        // Every failure from the threshold on trips the monitor, and the
+        // unhealthy provider stays bound until the fallback has initialized.
+        for (var i = 0; i < 4; i++) {
+          primary.emit(
+            AdEventFailed(
+              format: AdFormat.interstitial,
+              providerName: 'primary',
+              error: AdError(
+                code: 'load_failed',
+                message: 'x',
+                providerName: 'primary',
+              ),
+            ),
+          );
+          await pumpEventLoop();
+        }
+        backupInit.complete();
+        await pumpEventLoop();
+
+        expect(AdManager.activeProviderName, 'backup');
+        expect(backups, hasLength(1), reason: 'no extra fallback instances');
+        final event = events.single as AdProviderSwitched;
+        expect(event.fromProvider, 'primary');
+        expect(event.reason, ProviderSwitchReason.healthThresholdExceeded);
+      },
+    );
+
+    test(
+      'ignores a failure from a show that began before a switch away',
+      () async {
+        final showGate = Completer<void>();
+        var backupBuilds = 0;
+        AdManager.register(
+          'flaky',
+          () => _GatedThrowingAdProvider('flaky', showGate.future),
+        );
+        AdManager.register('backup', () {
+          backupBuilds++;
+          return FakeAdProvider('backup');
+        });
+
+        await AdManager.boot(
+          configSource: FakeAdConfigSource({
+            'active_provider': 'flaky',
+            'fallback_provider': 'backup',
+            'health_failure_threshold': 1,
+          }),
+        );
+
+        final show = AdManager.I.showRewarded();
+        await AdManager.switchProvider('backup');
+        showGate.complete();
+
+        expect((await show).shown, isFalse);
+        await pumpEventLoop();
+
+        expect(AdManager.activeProviderName, 'backup');
+        expect(
+          backupBuilds,
+          1,
+          reason: 'the stale failure must not re-activate the fallback',
+        );
+      },
+    );
+
     test('retries the configured provider after the cooldown and recovers', () {
       fakeAsync((async) {
         var primaryHealthy = false;
@@ -640,6 +731,20 @@ class _ThrowingAdProvider extends FakeAdProvider {
 
   @override
   Future<AdShowResult> showInterstitial({String? placement}) {
+    throw StateError('$name: boom');
+  }
+}
+
+/// A provider whose rewarded show waits for [gate] and then throws — a show
+/// still in flight when AdManager switches away from the provider.
+class _GatedThrowingAdProvider extends FakeAdProvider {
+  _GatedThrowingAdProvider(super.name, this.gate);
+
+  final Future<void> gate;
+
+  @override
+  Future<AdShowResult> showRewarded({String? placement}) async {
+    await gate;
     throw StateError('$name: boom');
   }
 }

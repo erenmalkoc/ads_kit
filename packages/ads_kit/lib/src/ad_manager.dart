@@ -187,6 +187,7 @@ final class AdManager {
     _healthMonitor = HealthMonitor(
       failureThreshold: AdRuntimeConfig.safeDefaults.healthFailureThreshold,
     );
+    _managed._escalating = false;
     _managed._bindTo(_active, _activeKey);
   }
 
@@ -392,6 +393,11 @@ final class _ManagedAdProvider implements AdProvider {
   StreamSubscription<AdEvent>? _delegateSub;
   final _events = StreamController<AdEvent>.broadcast();
 
+  /// Whether a health-triggered fallback is still initializing. The
+  /// unhealthy provider stays bound until then, so its further failures
+  /// trip the monitor again; each must not start another activation.
+  bool _escalating = false;
+
   void _bindTo(AdProvider provider, String key) {
     unawaited(_delegateSub?.cancel());
     _delegate = provider;
@@ -422,6 +428,11 @@ final class _ManagedAdProvider implements AdProvider {
   }
 
   void _escalateAfterHealthTrip(String unhealthyKey) {
+    // Start one fallback at a time, and ignore a stale trip from a provider
+    // that is no longer bound (a show that began before a switch).
+    if (_escalating || unhealthyKey != _delegateKey) return;
+    _escalating = true;
+
     final nextKey = unhealthyKey == AdManager._config.fallbackProvider
         ? 'noop'
         : AdManager._config.fallbackProvider;
@@ -430,7 +441,7 @@ final class _ManagedAdProvider implements AdProvider {
         nextKey,
         reason: ProviderSwitchReason.healthThresholdExceeded,
         emitOnDirectSuccess: true,
-      ),
+      ).whenComplete(() => _escalating = false),
     );
   }
 
