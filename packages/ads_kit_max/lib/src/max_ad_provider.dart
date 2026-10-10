@@ -344,6 +344,7 @@ final class MaxAdProvider implements AdProvider {
     return max.MaxAdView(
       adUnitId: adUnitId,
       adFormat: maxFormat,
+      placement: placement,
       isAdaptiveBannerEnabled: isAdaptive,
       height: heightOverride,
       listener: buildAdViewListener(

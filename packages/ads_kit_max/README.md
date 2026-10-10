@@ -106,8 +106,10 @@ restrictive choice: no GDPR consent, and opted out of CCPA sale.
 
 `test/max_mappers_test.dart` covers every MAX -> `ads_kit` type
 conversion (`max_mappers.dart`) as pure functions over primitives — no
-real SDK calls, no platform channels. The provider and listener builder
-functions are thin glue over those pure functions and the SDK's
-documented API and aren't independently unit tested here, consistent with
-the rest of this monorepo's policy of not writing tests that require a
-real ad SDK call.
+real SDK calls, no platform channels. `test/max_banner_test.dart` checks,
+against a mocked `applovin_max` method channel, that every banner size
+passes its placement to `MaxAdView`. The rest of the provider and the
+listener builder functions are thin glue over those pure functions and
+the SDK's documented API and aren't independently unit tested here,
+consistent with the rest of this monorepo's policy of not writing tests
+that require a real ad SDK call.
