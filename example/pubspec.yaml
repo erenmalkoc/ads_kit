@@ -13,7 +13,6 @@ dependencies:
     sdk: flutter
   ads_kit:
     path: ../packages/ads_kit
-  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
