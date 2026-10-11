@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Fix: banners now request their ad once their platform view is created; in 0.1.0 they never loaded.
+- Fix: banners keep their platform view across parent rebuilds instead of recreating it.
+- Add `example/example.dart`.
+
 ## 0.1.0
 
 Initial release.

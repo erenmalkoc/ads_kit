@@ -3,7 +3,7 @@ description: >-
   Mediation-platform-independent ad abstraction: AdProvider contract,
   AdManager, frequency capping, health monitoring and remote-config-driven
   provider selection.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/erenmalkoc/ads_kit
 repository: https://github.com/erenmalkoc/ads_kit/tree/main/packages/ads_kit
 

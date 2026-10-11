@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Fix: a zero or negative `health_failure_threshold` in remote config now falls back to the default of 3 instead of throwing in `AdManager.boot()` (debug) or tripping on every failure (release).
+- Fix: repeated failures on an unhealthy provider start at most one health fallback at a time, instead of initializing (and leaking) a fallback provider per failure.
+- Fix: a provider switch made while a recovery attempt is initializing now wins; the recovery result is disposed instead of overriding it.
+- Add `example/example.dart`.
+
 ## 0.1.0
 
 Initial release.

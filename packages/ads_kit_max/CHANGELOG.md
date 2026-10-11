@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Fix: banner and MREC placements are now passed to `MaxAdView`, so they reach AppLovin reporting.
+- Add `example/example.dart`.
+
 ## 0.1.0
 
 Initial release.

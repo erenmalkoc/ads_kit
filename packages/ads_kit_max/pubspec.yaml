@@ -2,7 +2,7 @@ name: ads_kit_max
 description: >
   AppLovin MAX implementation of the ads_kit AdProvider contract. Wraps
   applovin_max — no ads_kit-facing API here ever leaks a MAX SDK type.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/erenmalkoc/ads_kit
 repository: https://github.com/erenmalkoc/ads_kit/tree/main/packages/ads_kit_max
 
