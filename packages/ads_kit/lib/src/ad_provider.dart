@@ -38,8 +38,8 @@ abstract class AdProvider {
   Future<void> updateConsent(AdConsent consent);
 
   /// Requests the SDK start loading an ad for [format] ahead of when it's
-  /// needed. A no-op for formats the SDK auto-loads (e.g. LevelPlay
-  /// interstitials/rewarded ads load themselves once enabled).
+  /// needed. A no-op for formats that load on their own (e.g. banners,
+  /// which load when their widget is mounted).
   Future<void> preload(AdFormat format);
 
   /// Whether an ad for [format] is currently loaded and can be shown

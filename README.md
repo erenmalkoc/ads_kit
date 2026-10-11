@@ -30,18 +30,18 @@ a config change, not a migration.
 
 ```
 packages/
-  ads_kit/        # AdProvider contract, AdManager, FrequencyGuard,
-                    # HealthMonitor, remote-config parsing, NoopAdProvider.
-                    # Zero dependencies on any ad network SDK.
+  ads_kit/              # AdProvider contract, AdManager, FrequencyGuard,
+                        # HealthMonitor, remote-config parsing, NoopAdProvider.
+                        # Zero dependencies on any ad network SDK.
   ads_kit_levelplay/    # LevelPlayAdProvider — wraps unity_levelplay_mediation.
   ads_kit_max/          # MaxAdProvider — wraps applovin_max.
-example/            # Runnable demo: switch providers, try every format,
-                    # watch the live AdEvent stream.
+example/                # Runnable demo: switch providers, try every format,
+                        # watch the live AdEvent stream.
 ```
 
 Managed as a [Melos](https://melos.invertase.dev/) workspace on top of native
 Dart/Flutter [pub workspaces](https://dart.dev/tools/pub/workspaces) — one
-`dart pub get` at the repo root resolves every package.
+`flutter pub get` at the repo root resolves every package.
 
 ## The one rule that matters
 

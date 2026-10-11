@@ -1,17 +1,25 @@
 # ads_kit_example
 
-A new Flutter project.
+A runnable demo of `ads_kit`. It registers two fake providers behind
+`AdManager` so you can try every format, switch providers at runtime and
+watch the live `AdEvent` stream, without a Firebase project or any ad SDK
+keys.
 
-## Getting Started
+- `demo_a` (`DemoAdProvider`, 15% no-fill rate) is the active provider.
+- `demo_b` (`DemoAdProvider`, 35% no-fill rate) is the alternative to
+  switch to.
+- `noop` is the built-in fallback.
 
-This project is a starting point for a Flutter application.
+`StaticAdConfigSource` stands in for Firebase Remote Config and serves a
+fixed config with short frequency caps, so the demo doesn't make you wait
+through production-sized cooldowns.
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get   # at the repo root; resolves the whole workspace
+cd example
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+`flutter test` runs the widget tests in `test/`.
