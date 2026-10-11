@@ -4,6 +4,17 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  # Weekly, so a new Flutter stable or transitive release surfaces without a push.
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -36,3 +47,7 @@ jobs:
 
       - name: Test
         run: melos run test
+
+      - name: Publish dry-run
+        # --no-private selects exactly the three published packages.
+        run: melos exec --no-private -- flutter pub publish --dry-run
